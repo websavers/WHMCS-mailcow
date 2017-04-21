@@ -687,10 +687,13 @@ function mailcow_AdminServicesTabFieldsSave(array $params)
 }
 */
 
-function mailcow_LoginLink(array $params){
-  
-  return "https://{$params['serverhostname']}/index.php?login_user={$params['username']}&login_pass={$params['password']}";
-  
+function mailcow_LoginLink(array $params){ /** Not working Need to use JS to submit form **/
+/*
+  return "<a href='https://{$params['serverhostname']}/index.php?login_user={$params['username']}&pass_user={$params['password']}' 
+    class='btn btn-primary' 
+    target='_blank'>
+    <i class='fa fa-login'></i> Login as User</a>";
+*/
 }
 
 /**
