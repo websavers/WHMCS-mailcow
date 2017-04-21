@@ -10,6 +10,7 @@ if (!defined("WHMCS")) {
 // Require any libraries needed for the module to function.
 require __DIR__ . '/vendor/autoload.php';
 use \Curl\Curl;
+use WHMCS\Input\Sanitize;
 
 // Also, perform any initialization required by the service's library.
 
@@ -687,6 +688,37 @@ function mailcow_AdminServicesTabFieldsSave(array $params)
 }
 */
 
+/**
+ * @param $params
+ * @return string
+ */
+function mailcow_AdminLink(array $params)
+{
+    $address = ($params['serverhostname']) ? $params['serverhostname'] : $params['serverip'];
+    $secure = ($params["serversecure"]) ? 'https' : 'http';
+    if (empty($address)) {
+        return '';
+    }
+
+    $form = sprintf(
+        '<form action="%s://%s/index.php" method="post" target="_blank">' .
+        '<input type="hidden" name="login_user" value="%s" />' .
+        '<input type="hidden" name="pass_user" value="%s" />' .
+        '<input type="submit" value="%s">' .
+        '</form>',
+        $secure,
+        Sanitize::encode($address),
+        Sanitize::encode($params["serverusername"]),
+        Sanitize::encode($params["serverpassword"]),
+        'Login to panel'
+    );
+
+    return $form;
+}
+
+/**
+ * Admin Area Client Login link
+ */
 function mailcow_LoginLink(array $params){ /** Not working Need to use JS to submit form **/
 /*
   return "<a href='https://{$params['serverhostname']}/index.php?login_user={$params['username']}&pass_user={$params['password']}' 
