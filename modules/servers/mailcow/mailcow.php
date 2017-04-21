@@ -732,13 +732,13 @@ function mailcow_ClientArea(array $params) {
       '<form action="%s://%s/index.php" method="post" target="_blank">' .
       '<input type="hidden" name="login_user" value="%s" />' .
       '<input type="hidden" name="pass_user" value="%s" />' .
-      '<input type="submit" class="btn btn-primary" value="%s">' .
+      '<input type="submit" class="btn btn-primary btn-large" value="%s">' .
       '</form>',
       $secure,
       Sanitize::encode($address),
       Sanitize::encode($params["username"]),
       Sanitize::encode($params["password"]),
-      'Control Panel'
+      'Open Control Panel'
   );
 
   return $form;
