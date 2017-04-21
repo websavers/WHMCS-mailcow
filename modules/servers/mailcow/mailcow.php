@@ -717,6 +717,35 @@ function mailcow_AdminLink(array $params)
 }
 
 /**
+ * @param $params
+ * @return string
+ */
+function mailcow_ClientArea(array $params) {
+  
+  $address = ($params['serverhostname']) ? $params['serverhostname'] : $params['serverip'];
+  $secure = ($params["serversecure"]) ? 'https' : 'http';
+  if (empty($address)) {
+      return '';
+  }
+
+  $form = sprintf(
+      '<form action="%s://%s/index.php" method="post" target="_blank">' .
+      '<input type="hidden" name="login_user" value="%s" />' .
+      '<input type="hidden" name="pass_user" value="%s" />' .
+      '<input type="submit" class="btn btn-primary" value="%s">' .
+      '</form>',
+      $secure,
+      Sanitize::encode($address),
+      Sanitize::encode($params["username"]),
+      Sanitize::encode($params["password"]),
+      'Control Panel'
+  );
+
+  return $form;
+    
+}
+
+/**
  * Admin Area Client Login link
  */
 function mailcow_LoginLink(array $params){ /** Not working Need to use JS to submit form **/
