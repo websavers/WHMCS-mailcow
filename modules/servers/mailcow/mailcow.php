@@ -1,33 +1,6 @@
 <?php
 /**
- * WHMCS SDK Sample Provisioning Module
- *
- * Provisioning Modules, also referred to as Product or Server Modules, allow
- * you to create modules that allow for the provisioning and management of
- * products and services in WHMCS.
- *
- * This sample file demonstrates how a provisioning module for WHMCS should be
- * structured and exercises all supported functionality.
- *
- * Provisioning Modules are stored in the /modules/servers/ directory. The
- * module name you choose must be unique, and should be all lowercase,
- * containing only letters & numbers, always starting with a letter.
- *
- * Within the module itself, all functions must be prefixed with the module
- * filename, followed by an underscore, and then the function name. For this
- * example file, the filename is "provisioningmodule" and therefore all
- * functions begin "provisioningmodule_".
- *
- * If your module or third party API does not support a given function, you
- * should not define that function within your module. Only the _ConfigOptions
- * function is required.
- *
- * For more information, please refer to the online documentation.
- *
- * @see http://docs.whmcs.com/Provisioning_Module_Developer_Docs
- *
- * @copyright Copyright (c) WHMCS Limited 2015
- * @license http://www.whmcs.com/license/ WHMCS Eula
+ * MailCow Provisioning Module by Websavers Inc
  */
 
 if (!defined("WHMCS")) {
@@ -35,8 +8,9 @@ if (!defined("WHMCS")) {
 }
 
 // Require any libraries needed for the module to function.
-// require_once __DIR__ . '/path/to/library/loader.php';
-//
+require __DIR__ . '/vendor/autoload.php';
+use \Curl\Curl;
+
 // Also, perform any initialization required by the service's library.
 
 /**
@@ -49,14 +23,14 @@ if (!defined("WHMCS")) {
  *
  * @return array
  */
-function provisioningmodule_MetaData()
+function mailcow_MetaData()
 {
     return array(
-        'DisplayName' => 'Demo Provisioning Module',
+        'DisplayName' => 'MailCow',
         'APIVersion' => '1.1', // Use API Version 1.1
         'RequiresServer' => true, // Set true if module requires a server to work
-        'DefaultNonSSLPort' => '1111', // Default Non-SSL Connection Port
-        'DefaultSSLPort' => '1112', // Default SSL Connection Port
+        'DefaultNonSSLPort' => '80', // Default Non-SSL Connection Port
+        'DefaultSSLPort' => '443', // Default SSL Connection Port
         'ServiceSingleSignOnLabel' => 'Login to Panel as User',
         'AdminSingleSignOnLabel' => 'Login to Panel as Admin',
     );
@@ -83,7 +57,7 @@ function provisioningmodule_MetaData()
  *
  * @return array
  */
-function provisioningmodule_ConfigOptions()
+function mailcow_ConfigOptions()
 {
     return array(
         // a text field type allows for single line text input
@@ -147,29 +121,25 @@ function provisioningmodule_ConfigOptions()
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_CreateAccount(array $params)
+function mailcow_CreateAccount(array $params)
 {
     try {
-        // Call the service's provisioning function, using the values provided
-        // by WHMCS in `$params`.
-        //
-        // A sample `$params` array may be defined as:
-        //
-        // ```
-        // array(
-        //     'domain' => 'The domain of the service to provision',
-        //     'username' => 'The username to access the new service',
-        //     'password' => 'The password to access the new service',
-        //     'configoption1' => 'The amount of disk space to provision',
-        //     'configoption2' => 'The new services secret key',
-        //     'configoption3' => 'Whether or not to enable FTP',
-        //     ...
-        // )
-        // ```
+      
+      $mailcow = new mailcow_api($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
+      $result = $mailcow->addDomain($params['domain'], $params['configoptions']['Email Accounts']);
+      
+      logModuleCall(
+          'mailcow',
+          __FUNCTION__,
+          $params,
+          print_r($result, true),
+          null
+      );
+      
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'mailcow',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -195,7 +165,8 @@ function provisioningmodule_CreateAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_SuspendAccount(array $params)
+/*
+function mailcow_SuspendAccount(array $params)
 {
     try {
         // Call the service's suspend function, using the values provided by
@@ -203,7 +174,7 @@ function provisioningmodule_SuspendAccount(array $params)
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'mailcow',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -215,6 +186,8 @@ function provisioningmodule_SuspendAccount(array $params)
 
     return 'success';
 }
+
+*/
 
 /**
  * Un-suspend instance of a product/service.
@@ -229,7 +202,8 @@ function provisioningmodule_SuspendAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_UnsuspendAccount(array $params)
+ /*
+function mailcow_UnsuspendAccount(array $params)
 {
     try {
         // Call the service's unsuspend function, using the values provided by
@@ -237,7 +211,7 @@ function provisioningmodule_UnsuspendAccount(array $params)
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'mailcow',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -249,6 +223,7 @@ function provisioningmodule_UnsuspendAccount(array $params)
 
     return 'success';
 }
+*/
 
 /**
  * Terminate instance of a product/service.
@@ -262,7 +237,9 @@ function provisioningmodule_UnsuspendAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_TerminateAccount(array $params)
+ 
+ /*
+function mailcow_TerminateAccount(array $params)
 {
     try {
         // Call the service's terminate function, using the values provided by
@@ -270,7 +247,7 @@ function provisioningmodule_TerminateAccount(array $params)
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'mailcow',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -282,6 +259,8 @@ function provisioningmodule_TerminateAccount(array $params)
 
     return 'success';
 }
+
+*/
 
 /**
  * Change the password for an instance of a product/service.
@@ -299,7 +278,9 @@ function provisioningmodule_TerminateAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_ChangePassword(array $params)
+ 
+/*
+function mailcow_ChangePassword(array $params)
 {
     try {
         // Call the service's change password function, using the values
@@ -316,7 +297,7 @@ function provisioningmodule_ChangePassword(array $params)
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'mailcow',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -328,6 +309,7 @@ function provisioningmodule_ChangePassword(array $params)
 
     return 'success';
 }
+*/
 
 /**
  * Upgrade or downgrade an instance of a product/service.
@@ -345,25 +327,17 @@ function provisioningmodule_ChangePassword(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_ChangePackage(array $params)
+function mailcow_ChangePackage(array $params)
 {
     try {
-        // Call the service's change password function, using the values
-        // provided by WHMCS in `$params`.
-        //
-        // A sample `$params` array may be defined as:
-        //
-        // ```
-        // array(
-        //     'username' => 'The service username',
-        //     'configoption1' => 'The new service disk space',
-        //     'configoption3' => 'Whether or not to enable FTP',
-        // )
-        // ```
+        
+        $mailcow = new mailcow_api($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
+        $mailcow->addDomain($domain, $num_mailboxes);
+        
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'mailcow',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -393,7 +367,7 @@ function provisioningmodule_ChangePackage(array $params)
  *
  * @return array
  */
-function provisioningmodule_TestConnection(array $params)
+function mailcow_TestConnection(array $params)
 {
     try {
         // Call the service's connection test function.
@@ -403,7 +377,7 @@ function provisioningmodule_TestConnection(array $params)
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'mailcow',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -426,16 +400,17 @@ function provisioningmodule_TestConnection(array $params)
  * Define additional actions that an admin user can perform for an
  * instance of a product/service.
  *
- * @see provisioningmodule_buttonOneFunction()
+ * @see mailcow_buttonOneFunction()
  *
  * @return array
  */
-function provisioningmodule_AdminCustomButtonArray()
-{
+function mailcow_AdminCustomButtonArray(){
+  /*
     return array(
         "Button 1 Display Value" => "buttonOneFunction",
         "Button 2 Display Value" => "buttonTwoFunction",
     );
+  */
 }
 
 /**
@@ -449,7 +424,7 @@ function provisioningmodule_AdminCustomButtonArray()
  *
  * @return array
  */
-function provisioningmodule_ClientAreaCustomButtonArray()
+function mailcow_ClientAreaCustomButtonArray()
 {
     return array(
         "Action 1 Display Value" => "actionOneFunction",
@@ -468,11 +443,11 @@ function provisioningmodule_ClientAreaCustomButtonArray()
  * @param array $params common module parameters
  *
  * @see http://docs.whmcs.com/Provisioning_Module_SDK_Parameters
- * @see provisioningmodule_AdminCustomButtonArray()
+ * @see mailcow_AdminCustomButtonArray()
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_buttonOneFunction(array $params)
+function mailcow_buttonOneFunction(array $params)
 {
     try {
         // Call the service's function, using the values provided by WHMCS in
@@ -480,7 +455,7 @@ function provisioningmodule_buttonOneFunction(array $params)
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'mailcow',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -504,11 +479,11 @@ function provisioningmodule_buttonOneFunction(array $params)
  * @param array $params common module parameters
  *
  * @see http://docs.whmcs.com/Provisioning_Module_SDK_Parameters
- * @see provisioningmodule_ClientAreaCustomButtonArray()
+ * @see mailcow_ClientAreaCustomButtonArray()
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_actionOneFunction(array $params)
+function mailcow_actionOneFunction(array $params)
 {
     try {
         // Call the service's function, using the values provided by WHMCS in
@@ -516,7 +491,7 @@ function provisioningmodule_actionOneFunction(array $params)
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'mailcow',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -541,11 +516,13 @@ function provisioningmodule_actionOneFunction(array $params)
  * @param array $params common module parameters
  *
  * @see http://docs.whmcs.com/Provisioning_Module_SDK_Parameters
- * @see provisioningmodule_AdminServicesTabFieldsSave()
+ * @see mailcow_AdminServicesTabFieldsSave()
  *
  * @return array
  */
-function provisioningmodule_AdminServicesTabFields(array $params)
+ 
+ /*
+function mailcow_AdminServicesTabFields(array $params)
 {
     try {
         // Call the service's function, using the values provided by WHMCS in
@@ -557,15 +534,15 @@ function provisioningmodule_AdminServicesTabFields(array $params)
             'Number of Apples' => (int) $response['numApples'],
             'Number of Oranges' => (int) $response['numOranges'],
             'Last Access Date' => date("Y-m-d H:i:s", $response['lastLoginTimestamp']),
-            'Something Editable' => '<input type="hidden" name="provisioningmodule_original_uniquefieldname" '
+            'Something Editable' => '<input type="hidden" name="mailcow_original_uniquefieldname" '
                 . 'value="' . htmlspecialchars($response['textvalue']) . '" />'
-                . '<input type="text" name="provisioningmodule_uniquefieldname"'
+                . '<input type="text" name="mailcow_uniquefieldname"'
                 . 'value="' . htmlspecialchars($response['textvalue']) . '" />',
         );
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'mailcow',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -577,6 +554,8 @@ function provisioningmodule_AdminServicesTabFields(array $params)
 
     return array();
 }
+
+*/
 
 /**
  * Execute actions upon save of an instance of a product/service.
@@ -590,17 +569,17 @@ function provisioningmodule_AdminServicesTabFields(array $params)
  * @param array $params common module parameters
  *
  * @see http://docs.whmcs.com/Provisioning_Module_SDK_Parameters
- * @see provisioningmodule_AdminServicesTabFields()
+ * @see mailcow_AdminServicesTabFields()
  */
-function provisioningmodule_AdminServicesTabFieldsSave(array $params)
+function mailcow_AdminServicesTabFieldsSave(array $params)
 {
     // Fetch form submission variables.
-    $originalFieldValue = isset($_REQUEST['provisioningmodule_original_uniquefieldname'])
-        ? $_REQUEST['provisioningmodule_original_uniquefieldname']
+    $originalFieldValue = isset($_REQUEST['mailcow_original_uniquefieldname'])
+        ? $_REQUEST['mailcow_original_uniquefieldname']
         : '';
 
-    $newFieldValue = isset($_REQUEST['provisioningmodule_uniquefieldname'])
-        ? $_REQUEST['provisioningmodule_uniquefieldname']
+    $newFieldValue = isset($_REQUEST['mailcow_uniquefieldname'])
+        ? $_REQUEST['mailcow_uniquefieldname']
         : '';
 
     // Look for a change in value to avoid making unnecessary service calls.
@@ -611,7 +590,7 @@ function provisioningmodule_AdminServicesTabFieldsSave(array $params)
         } catch (Exception $e) {
             // Record the error in WHMCS's module log.
             logModuleCall(
-                'provisioningmodule',
+                'mailcow',
                 __FUNCTION__,
                 $params,
                 $e->getMessage(),
@@ -636,7 +615,7 @@ function provisioningmodule_AdminServicesTabFieldsSave(array $params)
  *
  * @return array
  */
-function provisioningmodule_ServiceSingleSignOn(array $params)
+function mailcow_ServiceSingleSignOn(array $params)
 {
     try {
         // Call the service's single sign-on token retrieval function, using the
@@ -650,7 +629,7 @@ function provisioningmodule_ServiceSingleSignOn(array $params)
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'mailcow',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -681,7 +660,7 @@ function provisioningmodule_ServiceSingleSignOn(array $params)
  *
  * @return array
  */
-function provisioningmodule_AdminSingleSignOn(array $params)
+function mailcow_AdminSingleSignOn(array $params)
 {
     try {
         // Call the service's single sign-on admin token retrieval function,
@@ -695,7 +674,7 @@ function provisioningmodule_AdminSingleSignOn(array $params)
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'mailcow',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -739,7 +718,7 @@ function provisioningmodule_AdminSingleSignOn(array $params)
  *
  * @return array
  */
-function provisioningmodule_ClientArea(array $params)
+function mailcow_ClientArea(array $params)
 {
     // Determine the requested action and set service call parameters based on
     // the action.
@@ -771,7 +750,7 @@ function provisioningmodule_ClientArea(array $params)
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'mailcow',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -787,3 +766,86 @@ function provisioningmodule_ClientArea(array $params)
         );
     }
 }
+
+
+
+class mailcow_api{
+  
+  private $curl;
+  private $cookie;
+  public $baseurl;
+  public $aliases = 500;
+  public $MAILBOXQUOTA;
+  
+  public function __construct($server_hostname, $server_login, $server_password, $mquota = 30720){
+    
+    $this->baseurl = 'https://' . $server_hostname;
+    $this->MAILBOXQUOTA = $mquota;
+
+    $this->curl = new Curl();
+    $this->curl->setOpt(CURLOPT_FOLLOWLOCATION, true);
+    $this->curl->setCookieFile('');
+    $this->curl->setCookieJar(dirname(__FILE__) . '/cookiejar.txt');
+    
+    $data = array(
+      'login_user' => $server_login,
+      'pass_user' => html_entity_decode($server_password),
+    );
+    
+    //Create session
+    $this->curl->post($this->baseurl, $data);
+    //$this->cookie = $this->curl->getCookie('PHPSESSID');
+        
+  }
+  
+  public function addDomain($domain, $num_mailboxes){
+    
+    return $this->_addOrEditDomain($domain, $num_mailboxes, true);
+    
+  }
+  
+  public function editDomain($domain, $num_mailboxes){
+    
+    return $this->_addOrEditDomain($domain, $num_mailboxes, false);
+    
+  }
+  
+  private function _addOrEditDomain($domain, $num_mailboxes, $addDomain = true){
+    
+    $data = array( /** Those commented out hopefully aren't necessary to submit... **/
+      'domain' => urlencode($domain),
+      'description' => '',
+      'aliases' => $this->aliases,
+      'mailboxes' => $num_mailboxes,
+      'maxquota' => $this->MAILBOXQUOTA, //per mailbox
+      'quota' => $this->MAILBOXQUOTA * $num_mailboxes, //for domain
+      'backupmx' => '',
+      'relay_all_recipients' => '',
+      'active' => true, // maybe can leave out to keep existing value
+    );
+    
+    if ($addDomain){
+      $data['mailbox_add_domain'] = true;
+    }
+    else{
+      $data['mailbox_edit_domain'] = true;
+    }
+    
+    $this->curl->post($this->baseurl . '/mailbox.php', $data);
+    
+    if ($this->curl->error) {
+      
+      return array( 
+        'error' => $this->curl->errorCode,
+        'error_message' => $this->curl->errorMessage,
+      );
+      
+    } else {
+      
+      return $this->curl->response;
+      
+    }
+      
+  }
+  
+} /* Close MailCow_API class */
