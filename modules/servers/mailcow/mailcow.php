@@ -136,6 +136,16 @@ function mailcow_CreateAccount(array $params)
           null
       );
       
+      $result = $mailcow->addDomainAdmin($params['domain'], $params['username'], $params['password']);
+      
+      logModuleCall(
+          'mailcow',
+          __FUNCTION__,
+          $params,
+          print_r($result, true),
+          null
+      );
+      
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
@@ -172,6 +182,16 @@ function mailcow_SuspendAccount(array $params)
       
       $mailcow = new mailcow_api($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
       $result = $mailcow->disableDomain($params['domain'], $params['configoptions']['Email Accounts']);
+      
+      logModuleCall(
+          'mailcow',
+          __FUNCTION__,
+          $params,
+          print_r($result, true),
+          null
+      );
+      
+      $result = $mailcow->disableDomainAdmin($params['domain'], $params['username']);
       
       logModuleCall(
           'mailcow',
@@ -226,6 +246,16 @@ function mailcow_UnsuspendAccount(array $params)
           null
       );
       
+      $result = $mailcow->activateDomainAdmin($params['domain'], $params['username']);
+      
+      logModuleCall(
+          'mailcow',
+          __FUNCTION__,
+          $params,
+          print_r($result, true),
+          null
+      );
+      
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
@@ -258,6 +288,7 @@ function mailcow_UnsuspendAccount(array $params)
 function mailcow_TerminateAccount(array $params)
 {
     try {
+      
       $mailcow = new mailcow_api($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
       $result = $mailcow->removeDomain($params['domain']);
       
@@ -268,6 +299,17 @@ function mailcow_TerminateAccount(array $params)
           print_r($result, true),
           null
       );
+      
+      $result = $mailcow->removeDomainAdmin($params['username']);
+      
+      logModuleCall(
+          'mailcow',
+          __FUNCTION__,
+          $params,
+          print_r($result, true),
+          null
+      );
+      
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
@@ -283,8 +325,6 @@ function mailcow_TerminateAccount(array $params)
 
     return 'success';
 }
-
-*/
 
 /**
  * Change the password for an instance of a product/service.
@@ -303,21 +343,20 @@ function mailcow_TerminateAccount(array $params)
  * @return string "success" or an error message
  */
  
-/*
 function mailcow_ChangePassword(array $params)
 {
     try {
-        // Call the service's change password function, using the values
-        // provided by WHMCS in `$params`.
-        //
-        // A sample `$params` array may be defined as:
-        //
-        // ```
-        // array(
-        //     'username' => 'The service username',
-        //     'password' => 'The new service password',
-        // )
-        // ```
+      
+      $result = $mailcow->changePasswordDomainAdmin($params['domain'], $params['username'], $params['password']);
+      
+      logModuleCall(
+          'mailcow',
+          __FUNCTION__,
+          $params,
+          print_r($result, true),
+          null
+      );
+      
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
@@ -333,7 +372,6 @@ function mailcow_ChangePassword(array $params)
 
     return 'success';
 }
-*/
 
 /**
  * Upgrade or downgrade an instance of a product/service.
@@ -436,14 +474,17 @@ function mailcow_TestConnection(array $params)
  *
  * @return array
  */
+
+/* 
 function mailcow_AdminCustomButtonArray(){
-  /*
+
     return array(
         "Button 1 Display Value" => "buttonOneFunction",
         "Button 2 Display Value" => "buttonTwoFunction",
     );
-  */
+    
 }
+*/
 
 /**
  * Additional actions a client user can invoke.
@@ -456,6 +497,8 @@ function mailcow_AdminCustomButtonArray(){
  *
  * @return array
  */
+
+/*
 function mailcow_ClientAreaCustomButtonArray()
 {
     return array(
@@ -463,6 +506,7 @@ function mailcow_ClientAreaCustomButtonArray()
         "Action 2 Display Value" => "actionTwoFunction",
     );
 }
+*/
 
 /**
  * Custom function for performing an additional action.
@@ -479,6 +523,8 @@ function mailcow_ClientAreaCustomButtonArray()
  *
  * @return string "success" or an error message
  */
+ 
+/*
 function mailcow_buttonOneFunction(array $params)
 {
     try {
@@ -499,6 +545,7 @@ function mailcow_buttonOneFunction(array $params)
 
     return 'success';
 }
+*/
 
 /**
  * Custom function for performing an additional action.
@@ -515,6 +562,8 @@ function mailcow_buttonOneFunction(array $params)
  *
  * @return string "success" or an error message
  */
+ 
+/*
 function mailcow_actionOneFunction(array $params)
 {
     try {
@@ -535,6 +584,7 @@ function mailcow_actionOneFunction(array $params)
 
     return 'success';
 }
+*/
 
 /**
  * Admin services tab additional fields.
@@ -603,6 +653,8 @@ function mailcow_AdminServicesTabFields(array $params)
  * @see http://docs.whmcs.com/Provisioning_Module_SDK_Parameters
  * @see mailcow_AdminServicesTabFields()
  */
+ 
+/*
 function mailcow_AdminServicesTabFieldsSave(array $params)
 {
     // Fetch form submission variables.
@@ -633,6 +685,13 @@ function mailcow_AdminServicesTabFieldsSave(array $params)
         }
     }
 }
+*/
+
+function mailcow_LoginLink(array $params){
+  
+  return "https://{$params['serverhostname']}/index.php?login_user={$params['username']}&login_pass={$params['password']}";
+  
+}
 
 /**
  * Perform single sign-on for a given instance of a product/service.
@@ -647,6 +706,7 @@ function mailcow_AdminServicesTabFieldsSave(array $params)
  *
  * @return array
  */
+/*
 function mailcow_ServiceSingleSignOn(array $params)
 {
     try {
@@ -674,6 +734,7 @@ function mailcow_ServiceSingleSignOn(array $params)
         );
     }
 }
+*/
 
 /**
  * Perform single sign-on for a server.
@@ -692,6 +753,8 @@ function mailcow_ServiceSingleSignOn(array $params)
  *
  * @return array
  */
+ 
+/*
 function mailcow_AdminSingleSignOn(array $params)
 {
     try {
@@ -719,6 +782,8 @@ function mailcow_AdminSingleSignOn(array $params)
         );
     }
 }
+*/
+
 
 /**
  * Client area output logic handling.
@@ -750,6 +815,8 @@ function mailcow_AdminSingleSignOn(array $params)
  *
  * @return array
  */
+ 
+ /*
 function mailcow_ClientArea(array $params)
 {
     // Determine the requested action and set service call parameters based on
@@ -798,7 +865,7 @@ function mailcow_ClientArea(array $params)
         );
     }
 }
-
+*/
 
 
 class mailcow_api{
@@ -829,6 +896,10 @@ class mailcow_api{
     //$this->cookie = $this->curl->getCookie('PHPSESSID');
         
   }
+  
+  /**
+   * Domain functions
+   */
   
   public function addDomain($domain, $num_mailboxes){
     
@@ -925,6 +996,114 @@ class mailcow_api{
       
     }
       
+  }
+  
+  
+  /**
+   * Domain Administrator Functions
+   */
+   
+   public function addDomainAdmin($domain, $username, $password){
+     
+     return $this->_addOrEditDomainAdmin($domain, $username, $password, 'create');
+     
+   }
+   
+   public function editDomainAdmin($domain, $username){
+     
+     return $this->_addOrEditDomainAdmin($domain, $username, null, 'edit');
+     
+   }
+   
+   public function disableDomainAdmin($domain, $username){
+     
+     return $this->_addOrEditDomainAdmin($domain, $username, null, 'disable');
+     
+   }
+   
+   public function activateDomainAdmin($domain, $username){
+     
+     return $this->_addOrEditDomainAdmin($domain, $username, null, 'activate');
+     
+   }
+   
+   public function changePasswordDomainAdmin($domain, $username, $password){
+     
+     return $this->_addOrEditDomainAdmin($domain, $username, $password, 'changepass');
+     
+   }
+   
+   public function removeDomainAdmin($username){
+     
+     $data = array( /** Those commented out hopefully aren't necessary to submit... **/
+       'username' => $username,
+       'delete_domain_admin' => '',
+     );
+     
+     $this->curl->post($this->baseurl . '/admin.php', $data);
+     
+     if ($this->curl->error) {
+       
+       return array( 
+         'error' => $this->curl->errorCode,
+         'error_message' => $this->curl->errorMessage,
+       );
+       
+     } else {
+       
+       return $this->curl->response;
+       
+     }
+       
+   }
+  
+  private function _addOrEditDomainAdmin($domain, $username, $password, $action){
+    
+    $data = array( /** Those commented out hopefully aren't necessary to submit... **/
+      'username' => $username,
+      'domain[]' => urlencode($domain),
+    );
+    
+    if ($action == 'create' || $action == 'changepass'){
+      $data['password'] = $password;
+      $data['password2'] = $password;
+    }
+    
+    if ($action != 'disable'){
+      $data['active'] = 'on';
+    }
+    
+    //logActivity("Add a domain? $addDomain"); //DEBUG
+    
+    switch ($action){
+      
+      case 'create':
+        $data['add_domain_admin'] = '';
+        break;
+      case 'edit':
+      case 'disable':
+      case 'activate':
+      case 'changepass':
+        $data['edit_domain_admin'] = '';
+        break;
+        
+    }
+    
+    $this->curl->post($this->baseurl . '/admin.php', $data);
+    
+    if ($this->curl->error) {
+      
+      return array( 
+        'error' => $this->curl->errorCode,
+        'error_message' => $this->curl->errorMessage,
+      );
+      
+    } else {
+      
+      return $this->curl->response;
+      
+    }
+    
   }
   
 } /* Close MailCow_API class */
