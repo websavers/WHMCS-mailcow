@@ -255,12 +255,19 @@ function mailcow_UnsuspendAccount(array $params)
  * @return string "success" or an error message
  */
  
- /*
 function mailcow_TerminateAccount(array $params)
 {
     try {
-        // Call the service's terminate function, using the values provided by
-        // WHMCS in `$params`.
+      $mailcow = new mailcow_api($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
+      $result = $mailcow->removeDomain($params['domain']);
+      
+      logModuleCall(
+          'mailcow',
+          __FUNCTION__,
+          $params,
+          print_r($result, true),
+          null
+      );
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
@@ -845,6 +852,30 @@ class mailcow_api{
     
     return $this->_addOrEditDomain($domain, $num_mailboxes, 'activate');
     
+  }
+  
+  public function removeDomain($domain){
+    
+    $data = array( /** Those commented out hopefully aren't necessary to submit... **/
+      'domain' => urlencode($domain),
+      'mailbox_delete_domain' => '',
+    );
+    
+    $this->curl->post($this->baseurl . '/mailbox.php', $data);
+    
+    if ($this->curl->error) {
+      
+      return array( 
+        'error' => $this->curl->errorCode,
+        'error_message' => $this->curl->errorMessage,
+      );
+      
+    } else {
+      
+      return $this->curl->response;
+      
+    }
+      
   }
   
   private function _addOrEditDomain($domain, $num_mailboxes, $action){
