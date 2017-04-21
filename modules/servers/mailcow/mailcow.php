@@ -165,12 +165,22 @@ function mailcow_CreateAccount(array $params)
  *
  * @return string "success" or an error message
  */
-/*
+
 function mailcow_SuspendAccount(array $params)
 {
     try {
-        // Call the service's suspend function, using the values provided by
-        // WHMCS in `$params`.
+      
+      $mailcow = new mailcow_api($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
+      $result = $mailcow->disableDomain($params['domain'], $params['configoptions']['Email Accounts']);
+      
+      logModuleCall(
+          'mailcow',
+          __FUNCTION__,
+          $params,
+          print_r($result, true),
+          null
+      );
+      
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
@@ -186,8 +196,6 @@ function mailcow_SuspendAccount(array $params)
 
     return 'success';
 }
-
-*/
 
 /**
  * Un-suspend instance of a product/service.
@@ -202,12 +210,22 @@ function mailcow_SuspendAccount(array $params)
  *
  * @return string "success" or an error message
  */
- /*
+
 function mailcow_UnsuspendAccount(array $params)
 {
     try {
-        // Call the service's unsuspend function, using the values provided by
-        // WHMCS in `$params`.
+      
+      $mailcow = new mailcow_api($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
+      $result = $mailcow->activateDomain($params['domain'], $params['configoptions']['Email Accounts']);
+      
+      logModuleCall(
+          'mailcow',
+          __FUNCTION__,
+          $params,
+          print_r($result, true),
+          null
+      );
+      
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
@@ -223,7 +241,6 @@ function mailcow_UnsuspendAccount(array $params)
 
     return 'success';
 }
-*/
 
 /**
  * Terminate instance of a product/service.
@@ -332,7 +349,15 @@ function mailcow_ChangePackage(array $params)
     try {
         
         $mailcow = new mailcow_api($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
-        $mailcow->addDomain($domain, $num_mailboxes);
+        $result = $mailcow->editDomain($params['domain'], $params['configoptions']['Email Accounts']);
+        
+        logModuleCall(
+            'mailcow',
+            __FUNCTION__,
+            $params,
+            print_r($result, true),
+            null
+        );
         
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
@@ -800,35 +825,58 @@ class mailcow_api{
   
   public function addDomain($domain, $num_mailboxes){
     
-    return $this->_addOrEditDomain($domain, $num_mailboxes, true);
+    return $this->_addOrEditDomain($domain, $num_mailboxes, 'create');
     
   }
   
   public function editDomain($domain, $num_mailboxes){
     
-    return $this->_addOrEditDomain($domain, $num_mailboxes, false);
+    return $this->_addOrEditDomain($domain, $num_mailboxes, 'edit');
     
   }
   
-  private function _addOrEditDomain($domain, $num_mailboxes, $addDomain = true){
+  public function disableDomain($domain, $num_mailboxes){
+    
+    return $this->_addOrEditDomain($domain, $num_mailboxes, 'disable');
+    
+  }
+  
+  public function activateDomain($domain, $num_mailboxes){
+    
+    return $this->_addOrEditDomain($domain, $num_mailboxes, 'activate');
+    
+  }
+  
+  private function _addOrEditDomain($domain, $num_mailboxes, $action){
     
     $data = array( /** Those commented out hopefully aren't necessary to submit... **/
       'domain' => urlencode($domain),
-      'description' => '',
+      'description' => 'None',
       'aliases' => $this->aliases,
       'mailboxes' => $num_mailboxes,
       'maxquota' => $this->MAILBOXQUOTA, //per mailbox
       'quota' => $this->MAILBOXQUOTA * $num_mailboxes, //for domain
-      'backupmx' => '',
-      'relay_all_recipients' => '',
-      'active' => true, // maybe can leave out to keep existing value
+      //'backupmx' => 'on',
+      //'relay_all_recipients' => 'on',
     );
     
-    if ($addDomain){
-      $data['mailbox_add_domain'] = true;
+    if ($action != 'disable'){
+      $data['active'] = 'on';
     }
-    else{
-      $data['mailbox_edit_domain'] = true;
+    
+    //logActivity("Add a domain? $addDomain"); //DEBUG
+    
+    switch ($action){
+      
+      case 'create':
+        $data['mailbox_add_domain'] = '';
+        break;
+      case 'edit':
+      case 'disable':
+      case 'activate':
+        $data['mailbox_edit_domain'] = '';
+        break;
+        
     }
     
     $this->curl->post($this->baseurl . '/mailbox.php', $data);
