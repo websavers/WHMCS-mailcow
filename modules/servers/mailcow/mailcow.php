@@ -1071,7 +1071,8 @@ class mailcow_api{
       
       $this->_restartSogo(); //on successful creation, restart SOGo
       
-      return $this->errorCheck( $this->curl->response );
+      //error output for this is different; can't use errorCheck function      
+      return $this->curl->response;
       
     }
       
