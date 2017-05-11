@@ -293,6 +293,7 @@ function mailcow_TerminateAccount(array $params)
     try {
       
       $mailcow = new mailcow_api($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
+      
       $result = $mailcow->removeDomain($params['domain']);
       
       logModuleCall(
@@ -1019,7 +1020,7 @@ class mailcow_api{
       
     } else {
       
-      return $this->curl->response;
+      return $this->errorCheck( $this->curl->response );
       
     }
     
@@ -1070,7 +1071,7 @@ class mailcow_api{
       
       $this->_restartSogo(); //on successful creation, restart SOGo
       
-      return $this->curl->response;
+      return $this->errorCheck( $this->curl->response );
       
     }
       
@@ -1135,7 +1136,7 @@ class mailcow_api{
        
      } else {
        
-       return $this->curl->response;
+       return $this->errorCheck( $this->curl->response );
        
      }
        
@@ -1184,7 +1185,7 @@ class mailcow_api{
       
     } else {
       
-      return $this->curl->response;
+      return $this->errorCheck( $this->curl->response );
       
     }
     
@@ -1218,6 +1219,24 @@ class mailcow_api{
         
       }
       
+    }
+    
+  }
+  
+  /* Takes an HTML response string as input, parses for errors */
+  private function errorCheck($response){
+    
+    $error_pattern = '/<div.*alert-danger" role="alert"><a href="#" class="close" data-dismiss="alert"> &times;</a>(.*)</div>/';
+    $success_pattern = '/<div.*alert-success" role="alert"><a href="#" class="close" data-dismiss="alert"> &times;</a>(.*)</div>/';
+    
+    if ( preg_match($success_pattern, $response, $matches) ){
+      return $matches[1];
+    }
+    else if ( preg_match($error_pattern, $response, $matches) ){
+      throw new Exception('Error: ' . $matches[1]);
+    }
+    else{
+      throw new Exception('Error: unexpected response');
     }
     
   }
