@@ -933,6 +933,10 @@ function mailcow_ClientArea(array $params)
 }
 */
 
+/**
+ * Not truly an API because it simply creates a session like a normal client by
+ * simulating login and submits POST requests to server like a logged in user
+ */
 
 class mailcow_api{
   
