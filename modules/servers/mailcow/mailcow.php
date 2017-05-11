@@ -1226,17 +1226,17 @@ class mailcow_api{
   /* Takes an HTML response string as input, parses for errors */
   private function errorCheck($response){
     
-    $error_pattern = '/<div.*alert-danger" role="alert"><a href="#" class="close" data-dismiss="alert"> &times;</a>(.*)</div>/';
-    $success_pattern = '/<div.*alert-success" role="alert"><a href="#" class="close" data-dismiss="alert"> &times;</a>(.*)</div>/';
+    $error_pattern = '/<div.*alert-danger.*<\/a>(.*)<\/div>/sim';
+    $success_pattern = '/<div.*alert-success.*<\/a>(.*)<\/div>/sim';
     
     if ( preg_match($success_pattern, $response, $matches) ){
-      return $matches[1];
+      return strip_tags( $matches[1] );
     }
     else if ( preg_match($error_pattern, $response, $matches) ){
-      throw new Exception('Error: ' . $matches[1]);
+      throw new Exception( 'Error: ' . strip_tags($matches[1]) );
     }
     else{
-      throw new Exception('Error: unexpected response');
+      throw new Exception( 'Error: unexpected response' );
     }
     
   }
