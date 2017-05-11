@@ -58,8 +58,9 @@ function mailcow_MetaData()
  *
  * @return array
  */
-function mailcow_ConfigOptions()
-{
+function mailcow_ConfigOptions(){
+  
+/*
     return array(
         // a text field type allows for single line text input
         'Text Field' => array(
@@ -104,6 +105,7 @@ function mailcow_ConfigOptions()
             'Description' => 'Freeform multi-line text input field',
         ),
     );
+*/
 }
 
 /**
