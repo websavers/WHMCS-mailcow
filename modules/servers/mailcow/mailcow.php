@@ -997,6 +997,12 @@ class mailcow_api{
   
   public function removeDomain($domain){
     
+    return $this->_removeDomain($domain);
+      
+  }
+  
+  private function _removeDomain($domain){
+    
     $data = array( /** Those commented out hopefully aren't necessary to submit... **/
       'domain' => urlencode($domain),
       'mailbox_delete_domain' => '',
@@ -1016,7 +1022,7 @@ class mailcow_api{
       return $this->curl->response;
       
     }
-      
+    
   }
   
   private function _addOrEditDomain($domain, $num_mailboxes, $action){
@@ -1062,6 +1068,8 @@ class mailcow_api{
       
     } else {
       
+      $this->_restartSogo(); //on successful creation, restart SOGo
+      
       return $this->curl->response;
       
     }
@@ -1105,6 +1113,12 @@ class mailcow_api{
    
    public function removeDomainAdmin($username){
      
+     return $this->_removeDomainAdmin($username);
+     
+   }
+   
+   private function _removeDomainAdmin($username){
+     
      $data = array( /** Those commented out hopefully aren't necessary to submit... **/
        'username' => $username,
        'delete_domain_admin' => '',
@@ -1129,7 +1143,7 @@ class mailcow_api{
   
   private function _addOrEditDomainAdmin($domain, $username, $password, $action){
     
-    $data = array( /** Those commented out hopefully aren't necessary to submit... **/
+    $data = array(
       'username' => $username,
       'domain[]' => urlencode($domain),
     );
@@ -1171,6 +1185,38 @@ class mailcow_api{
     } else {
       
       return $this->curl->response;
+      
+    }
+    
+  }
+  
+  private function _restartSogo(){
+    
+    $this->curl->get( $this->baseurl . '/call_sogo_ctrl.php', array('ACTION' => 'stop') );
+    
+    if ($this->curl->error) {
+      
+      return array( 
+        'error' => $this->curl->errorCode,
+        'error_message' => $this->curl->errorMessage,
+      );
+      
+    } else {
+      
+      $this->curl->get( $this->baseurl . '/call_sogo_ctrl.php', array('ACTION' => 'start') );
+      
+      if ($this->curl->error) {
+        
+        return array( 
+          'error' => $this->curl->errorCode,
+          'error_message' => $this->curl->errorMessage,
+        );
+        
+      } else {
+                
+        return $this->curl->response;
+        
+      }
       
     }
     
