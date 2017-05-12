@@ -8,7 +8,7 @@ if (!defined("WHMCS")) {
 }
 
 // Require any libraries needed for the module to function.
-require_once 'MailcowAPI.php';
+require_once 'lib/MailcowAPI.php';
 use Mailcow\MailcowAPI;
 use WHMCS\Input\Sanitize;
 use WHMCS\Database\Capsule;

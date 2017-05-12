@@ -2,7 +2,7 @@
 
 namespace Mailcow;
 
-require_once __DIR__ . '/lib/Curl/Curl.php';
+require_once __DIR__ . '/Curl/Curl.php';
 use Mailcow\Curl as MailcowCurl;
 
 class MailcowAPI{
