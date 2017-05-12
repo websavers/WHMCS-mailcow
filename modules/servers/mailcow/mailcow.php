@@ -8,9 +8,10 @@ if (!defined("WHMCS")) {
 }
 
 // Require any libraries needed for the module to function.
-require __DIR__ . '/vendor/autoload.php';
-use \Curl\Curl;
+require_once 'MailcowAPI.php';
+use Mailcow\MailcowAPI;
 use WHMCS\Input\Sanitize;
+use WHMCS\Database\Capsule;
 
 // Also, perform any initialization required by the service's library.
 
@@ -128,7 +129,7 @@ function mailcow_CreateAccount(array $params)
 {
     try {
       
-      $mailcow = new mailcow_api($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
+      $mailcow = new MailcowAPI($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
       $result = $mailcow->addDomain($params['domain'], $params['configoptions']['Email Accounts']);
       
       logModuleCall(
@@ -183,7 +184,7 @@ function mailcow_SuspendAccount(array $params)
 {
     try {
       
-      $mailcow = new mailcow_api($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
+      $mailcow = new MailcowAPI($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
       $result = $mailcow->disableDomain($params['domain'], $params['configoptions']['Email Accounts']);
       
       logModuleCall(
@@ -238,7 +239,7 @@ function mailcow_UnsuspendAccount(array $params)
 {
     try {
       
-      $mailcow = new mailcow_api($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
+      $mailcow = new MailcowAPI($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
       $result = $mailcow->activateDomain($params['domain'], $params['configoptions']['Email Accounts']);
       
       logModuleCall(
@@ -292,7 +293,7 @@ function mailcow_TerminateAccount(array $params)
 {
     try {
       
-      $mailcow = new mailcow_api($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
+      $mailcow = new MailcowAPI($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
       
       $result = $mailcow->removeDomain($params['domain']);
       
@@ -397,7 +398,7 @@ function mailcow_ChangePackage(array $params)
 {
     try {
         
-        $mailcow = new mailcow_api($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
+        $mailcow = new MailcowAPI($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
         $result = $mailcow->editDomain($params['domain'], $params['configoptions']['Email Accounts']);
         
         logModuleCall(
@@ -934,312 +935,66 @@ function mailcow_ClientArea(array $params)
 }
 */
 
+
+
 /**
- * Not truly an API because it simply creates a session like a normal client by
- * simulating login and submits POST requests to server like a logged in user
+ * @param $params
+ * @return string
  */
+function mailcow_UsageUpdate($params) {
 
-class mailcow_api{
-  
-  private $curl;
-  private $cookie;
-  public $baseurl;
-  public $aliases = 500;
-  public $MAILBOXQUOTA;
-  
-  public function __construct($server_hostname, $server_login, $server_password, $mquota = 30720){
-    
-    $this->baseurl = 'https://' . $server_hostname;
-    $this->MAILBOXQUOTA = $mquota;
+    $query = Capsule::table('tblhosting')
+        ->where('server', $params["serverid"]);
 
-    $this->curl = new Curl();
-    $this->curl->setOpt(CURLOPT_FOLLOWLOCATION, true);
-    $this->curl->setCookieFile('');
-    $this->curl->setCookieJar(dirname(__FILE__) . '/cookiejar.txt');
+    $domains = array();
+    /** @var stdClass $hosting */
+    foreach ($query->get() as $hosting) {
+        $domains[] = $hosting->domain;
+    }
     
-    $data = array(
-      'login_user' => $server_login,
-      'pass_user' => html_entity_decode($server_password),
-    );
-    
-    //Create session
-    $this->curl->post($this->baseurl, $data);
-    //$this->cookie = $this->curl->getCookie('PHPSESSID');
-        
-  }
-  
-  /**
-   * Domain functions
-   */
-  
-  public function addDomain($domain, $num_mailboxes){
-    
-    return $this->_addOrEditDomain($domain, $num_mailboxes, 'create');
-    
-  }
-  
-  public function editDomain($domain, $num_mailboxes){
-    
-    return $this->_addOrEditDomain($domain, $num_mailboxes, 'edit');
-    
-  }
-  
-  public function disableDomain($domain, $num_mailboxes){
-    
-    return $this->_addOrEditDomain($domain, $num_mailboxes, 'disable');
-    
-  }
-  
-  public function activateDomain($domain, $num_mailboxes){
-    
-    return $this->_addOrEditDomain($domain, $num_mailboxes, 'activate');
-    
-  }
-  
-  public function removeDomain($domain){
-    
-    return $this->_removeDomain($domain);
+    try {
       
-  }
-  
-  private function _removeDomain($domain){
-    
-    $data = array( /** Those commented out hopefully aren't necessary to submit... **/
-      'domain' => urlencode($domain),
-      'mailbox_delete_domain' => '',
-    );
-    
-    $this->curl->post($this->baseurl . '/mailbox.php', $data);
-    
-    if ($this->curl->error) {
+      $mailcow = new MailcowAPI($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
+      $domainsUsage = $mailcow->getUsageStats($domains);
       
-      return array( 
-        'error' => $this->curl->errorCode,
-        'error_message' => $this->curl->errorMessage,
+      logModuleCall(
+          'mailcow',
+          __FUNCTION__,
+          $params,
+          print_r($result, true),
+          null
       );
       
-    } else {
-      
-      return $this->errorCheck( $this->curl->response );
-      
-    }
-    
-  }
-  
-  private function _addOrEditDomain($domain, $num_mailboxes, $action){
-    
-    $data = array( /** Those commented out hopefully aren't necessary to submit... **/
-      'domain' => urlencode($domain),
-      'description' => 'None',
-      'aliases' => $this->aliases,
-      'mailboxes' => $num_mailboxes,
-      'maxquota' => $this->MAILBOXQUOTA, //per mailbox
-      'quota' => $this->MAILBOXQUOTA * $num_mailboxes, //for domain
-      //'backupmx' => 'on',
-      //'relay_all_recipients' => 'on',
-    );
-    
-    if ($action != 'disable'){
-      $data['active'] = 'on';
-    }
-    
-    //logActivity("Add a domain? $addDomain"); //DEBUG
-    
-    switch ($action){
-      
-      case 'create':
-        $data['mailbox_add_domain'] = '';
-        break;
-      case 'edit':
-      case 'disable':
-      case 'activate':
-        $data['mailbox_edit_domain'] = '';
-        break;
-        
-    }
-    
-    $this->curl->post($this->baseurl . '/mailbox.php', $data);
-    
-    if ($this->curl->error) {
-      
-      return array( 
-        'error' => $this->curl->errorCode,
-        'error_message' => $this->curl->errorMessage,
-      );
-      
-    } else {
-      
-      $this->_restartSogo(); //on successful creation, restart SOGo
-      
-      //error output for this is different; can't use errorCheck function      
-      return $this->curl->response;
-      
-    }
-      
-  }
-  
-  
-  /**
-   * Domain Administrator Functions
-   */
-   
-   public function addDomainAdmin($domain, $username, $password){
-     
-     return $this->_addOrEditDomainAdmin($domain, $username, $password, 'create');
-     
-   }
-   
-   public function editDomainAdmin($domain, $username){
-     
-     return $this->_addOrEditDomainAdmin($domain, $username, null, 'edit');
-     
-   }
-   
-   public function disableDomainAdmin($domain, $username){
-     
-     return $this->_addOrEditDomainAdmin($domain, $username, null, 'disable');
-     
-   }
-   
-   public function activateDomainAdmin($domain, $username){
-     
-     return $this->_addOrEditDomainAdmin($domain, $username, null, 'activate');
-     
-   }
-   
-   public function changePasswordDomainAdmin($domain, $username, $password){
-     
-     return $this->_addOrEditDomainAdmin($domain, $username, $password, 'changepass');
-     
-   }
-   
-   public function removeDomainAdmin($username){
-     
-     return $this->_removeDomainAdmin($username);
-     
-   }
-   
-   private function _removeDomainAdmin($username){
-     
-     $data = array( /** Those commented out hopefully aren't necessary to submit... **/
-       'username' => $username,
-       'delete_domain_admin' => '',
-     );
-     
-     $this->curl->post($this->baseurl . '/admin.php', $data);
-     
-     if ($this->curl->error) {
-       
-       return array( 
-         'error' => $this->curl->errorCode,
-         'error_message' => $this->curl->errorMessage,
-       );
-       
-     } else {
-       
-       return $this->errorCheck( $this->curl->response );
-       
-     }
-       
-   }
-  
-  private function _addOrEditDomainAdmin($domain, $username, $password, $action){
-    
-    $data = array(
-      'username' => $username,
-      'domain[]' => urlencode($domain),
-    );
-    
-    if ($action == 'create' || $action == 'changepass'){
-      $data['password'] = $password;
-      $data['password2'] = $password;
-    }
-    
-    if ($action != 'disable'){
-      $data['active'] = 'on';
-    }
-    
-    //logActivity("Add a domain? $addDomain"); //DEBUG
-    
-    switch ($action){
-      
-      case 'create':
-        $data['add_domain_admin'] = '';
-        break;
-      case 'edit':
-      case 'disable':
-      case 'activate':
-      case 'changepass':
-        $data['edit_domain_admin'] = '';
-        break;
-        
-    }
-    
-    $this->curl->post($this->baseurl . '/admin.php', $data);
-    
-    if ($this->curl->error) {
-      
-      return array( 
-        'error' => $this->curl->errorCode,
-        'error_message' => $this->curl->errorMessage,
-      );
-      
-    } else {
-      
-      return $this->errorCheck( $this->curl->response );
-      
-    }
-    
-  }
-  
-  private function _restartSogo(){
-    
-    $this->curl->get( $this->baseurl . '/call_sogo_ctrl.php', array('ACTION' => 'stop') );
-    
-    if ($this->curl->error) {
-      
-      return array( 
-        'error' => $this->curl->errorCode,
-        'error_message' => $this->curl->errorMessage,
-      );
-      
-    } else {
-      
-      $this->curl->get( $this->baseurl . '/call_sogo_ctrl.php', array('ACTION' => 'start') );
-      
-      if ($this->curl->error) {
-        
-        return array( 
-          'error' => $this->curl->errorCode,
-          'error_message' => $this->curl->errorMessage,
+    } catch (Exception $e) {
+        // Record the error in WHMCS's module log.
+        logModuleCall(
+            'mailcow',
+            __FUNCTION__,
+            $params,
+            $e->getMessage(),
+            $e->getTraceAsString()
         );
-        
-      } else {
-                
-        return $this->curl->response;
-        
-      }
-      
+
+        return $e->getMessage();
     }
     
-  }
-  
-  /* Takes an HTML response string as input, parses for errors */
-  private function errorCheck($response){
+    //logActivity(print_r($domainsUsage, true)); ////DEBUG
     
-    $error_pattern = '/<div.*alert-danger.*<\/a>(.*)<\/div>/sim';
-    $success_pattern = '/<div.*alert-success.*<\/a>(.*)<\/div>/sim';
-    
-    if ( preg_match($success_pattern, $response, $matches) ){
-      return strip_tags( $matches[1] );
+    foreach ( $domainsUsage as $domainName => $usage ) {
+
+        Capsule::table('tblhosting')
+            ->where('server', $params["serverid"])
+            ->where('domain', $domainName)
+            ->update(
+                array(
+                    "diskusage" => $usage['diskusage'],
+                    "disklimit" => $usage['disklimit'],
+                    "bwusage" => $usage['bwusage'],
+                    "bwlimit" => $usage['bwlimit'],
+                    "lastupdate" => Capsule::table('tblhosting')->raw('now()'),
+                )
+            );
     }
-    else if ( preg_match($error_pattern, $response, $matches) ){
-      throw new Exception( 'Error: ' . strip_tags($matches[1]) );
-    }
-    else{
-      throw new Exception( 'Error: unexpected response' );
-    }
-    
-  }
-  
-} /* Close MailCow_API class */
+
+    return 'success';
+}
