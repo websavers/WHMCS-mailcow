@@ -1,6 +1,6 @@
 <?php
 
-namespace Curl;
+namespace Mailcow;
 
 class MultiCurl
 {

@@ -2,12 +2,8 @@
 
 namespace Mailcow;
 
-//Solus Modules also uses the Curl\Curl namespace and class :(
-
-#if ( ! file_exists( __DIR__ . '/../solusvmpro/lib/Curl.php' ) ) {
-  require_once __DIR__ . '/vendor/autoload.php';
-#}
-use Curl\Curl as MailcowCurl;
+require_once __DIR__ . '/lib/Curl/Curl.php';
+use Mailcow\Curl as MailcowCurl;
 
 class MailcowAPI{
   
