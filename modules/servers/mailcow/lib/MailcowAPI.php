@@ -259,10 +259,11 @@ class MailcowAPI{
   private function _removeMailbox($mailbox){
     
     $data = array(
-      'mailbox' => $mailbox,
+      'username' => $mailbox,
+      'mailbox_delete_mailbox' => '',
     );
     
-    $this->curl->get($this->baseurl . '/delete.php', $data);
+    $this->curl->post($this->baseurl . '/mailbox.php', $data);
     
     return $this->errorCheckedResponse();
     
