@@ -3,7 +3,9 @@
 namespace Mailcow;
 
 require_once __DIR__ . '/Curl/Curl.php';
-use Mailcow\Curl as MailcowCurl;
+require_once __DIR__ . '/Curl/ArrayUtil.php';
+require_once __DIR__ . '/Curl/CaseInsensitiveArray.php';
+//use mailcow\lib\Curl as MailcowCurl;
 
 class MailcowAPI{
   
@@ -23,7 +25,7 @@ class MailcowAPI{
     $this->baseurl = 'https://' . $server_hostname;
     $this->MAILBOXQUOTA = $mquota;
 
-    $this->curl = new MailcowCurl();
+    $this->curl = new Curl();
     $this->curl->setOpt(CURLOPT_FOLLOWLOCATION, true);
     $this->curl->setCookieFile('');
     $this->curl->setCookieJar(dirname(__FILE__) . '/cookiejar.txt');

@@ -2,7 +2,7 @@
 
 namespace Mailcow;
 
-use Curl\ArrayUtil;
+use Mailcow\ArrayUtil;
 
 class Curl
 {
