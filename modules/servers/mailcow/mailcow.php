@@ -295,6 +295,18 @@ function mailcow_TerminateAccount(array $params)
       
       $mailcow = new MailcowAPI($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
       
+      //Remove Mailboxes
+      $result = $mailcow->removeAllMailboxes($params['domain']);
+      
+      logModuleCall(
+          'mailcow',
+          __FUNCTION__,
+          $params,
+          print_r($result, true),
+          null
+      );
+      
+      //Remove Domain
       $result = $mailcow->removeDomain($params['domain']);
       
       logModuleCall(
@@ -305,6 +317,7 @@ function mailcow_TerminateAccount(array $params)
           null
       );
       
+      //Remove Domain Admin
       $result = $mailcow->removeDomainAdmin($params['username']);
       
       logModuleCall(
@@ -351,6 +364,8 @@ function mailcow_TerminateAccount(array $params)
 function mailcow_ChangePassword(array $params)
 {
     try {
+      
+      $mailcow = new MailcowAPI($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
       
       $result = $mailcow->changePasswordDomainAdmin($params['domain'], $params['username'], $params['password']);
       

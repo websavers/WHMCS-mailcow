@@ -84,18 +84,7 @@ class MailcowAPI{
     
     $this->curl->post($this->baseurl . '/mailbox.php', $data);
     
-    if ($this->curl->error) {
-      
-      return array( 
-        'error' => $this->curl->errorCode,
-        'error_message' => $this->curl->errorMessage,
-      );
-      
-    } else {
-      
-      return $this->errorCheck( $this->curl->response );
-      
-    }
+    return $this->errorCheckedResponse();
     
   }
   
@@ -144,7 +133,7 @@ class MailcowAPI{
       
       $this->_restartSogo(); //on successful creation, restart SOGo
       
-      //error output for this is different; can't use errorCheck function      
+      //can't use errorCheck function after running _restartSogo().
       return $this->curl->response;
       
     }
@@ -201,18 +190,7 @@ class MailcowAPI{
      
      $this->curl->post($this->baseurl . '/admin.php', $data);
      
-     if ($this->curl->error) {
-       
-       return array( 
-         'error' => $this->curl->errorCode,
-         'error_message' => $this->curl->errorMessage,
-       );
-       
-     } else {
-       
-       return $this->errorCheck( $this->curl->response );
-       
-     }
+     return $this->errorCheckedResponse();
        
    }
   
@@ -226,6 +204,10 @@ class MailcowAPI{
     if ($action == 'create' || $action == 'changepass'){
       $data['password'] = $password;
       $data['password2'] = $password;
+    }
+    else{
+      $data['password'] = '';
+      $data['password2'] = '';
     }
     
     if ($action != 'disable'){
@@ -243,6 +225,7 @@ class MailcowAPI{
       case 'disable':
       case 'activate':
       case 'changepass':
+        $data['username_now'] = $username;
         $data['edit_domain_admin'] = '';
         break;
         
@@ -250,25 +233,45 @@ class MailcowAPI{
     
     $this->curl->post($this->baseurl . '/admin.php', $data);
     
-    if ($this->curl->error) {
+    return $this->errorCheckedResponse();
+    
+  }
+  
+  public function removeAllMailboxes($domain){
+    
+    if ( isset($domain) && !empty($domain) ){
       
-      return array( 
-        'error' => $this->curl->errorCode,
-        'error_message' => $this->curl->errorMessage,
-      );
+      $mailboxes = $this->_getMailboxes();
       
-    } else {
-      
-      return $this->errorCheck( $this->curl->response );
+      foreach ($mailboxes as $mbinfo){
+        if ( $mbinfo->domain === $domain ){
+            $this->_removeMailbox($mbinfo->username);
+        }
+      }
       
     }
+    else{
+      return "Error: Domain not provided.";
+    }
+    
+  }
+  
+  private function _removeMailbox($mailbox){
+    
+    $data = array(
+      'mailbox' => $mailbox,
+    );
+    
+    $this->curl->get($this->baseurl . '/delete.php', $data);
+    
+    return $this->errorCheckedResponse();
     
   }
   
   public function getUsageStats($domains){
     
-    $domains_d = json_decode( $this->curl->get( $this->baseurl . '/api/v1/domain/all', array() ) );
-    $mailboxes_d = json_decode( $this->curl->get( $this->baseurl . '/api/v1/mailbox/all', array() ) );
+    $domains_d = $this->_getDomains();
+    $mailboxes_d = $this->_getMailboxes();
     
     $usagedata = array();
     
@@ -283,6 +286,18 @@ class MailcowAPI{
     }
     
     return $usagedata;
+    
+  }
+  
+  private function _getDomains(){
+    
+    return json_decode( $this->curl->get( $this->baseurl . '/api/v1/domain/all', array() ) );
+    
+  }
+  
+  private function _getMailboxes(){
+    
+    return json_decode( $this->curl->get( $this->baseurl . '/api/v1/mailbox/all', array() ) );
     
   }
   
@@ -313,6 +328,23 @@ class MailcowAPI{
         return $this->curl->response;
         
       }
+      
+    }
+    
+  }
+  
+  private function errorCheckedResponse(){
+    
+    if ($this->curl->error) {
+      
+      return array( 
+        'error' => $this->curl->errorCode,
+        'error_message' => $this->curl->errorMessage,
+      );
+      
+    } else {
+      
+      return $this->errorCheck( $this->curl->response );
       
     }
     
