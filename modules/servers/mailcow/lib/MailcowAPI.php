@@ -95,9 +95,6 @@ class MailcowAPI{
   
   private function _addOrEditDomain($domain, $product_config, $action){
     
-    $num_mailboxes = $product_config['Email Accounts'];
-    $total_domain_storage = $product_config['Disk Space'];
-    
     $data = array(
       'domain' => urlencode($domain),
       'description' => 'None',
@@ -107,17 +104,17 @@ class MailcowAPI{
     );
     
     /** Number of Mailbox Based Limits **/
-    if ( !empty($num_mailboxes) ){
-      $data['mailboxes'] = $num_mailboxes;
-      $data['maxquota'] = $this->MAILBOXQUOTA, //per mailbox
-      $data['quota'] = $this->MAILBOXQUOTA * $num_mailboxes, //for total domain
+    if ( !empty($product_config['Email Accounts']) ){
+      $data['mailboxes'] = $product_config['Email Accounts'];
+      $data['maxquota'] = $this->MAILBOXQUOTA; //per mailbox
+      $data['quota'] = $this->MAILBOXQUOTA * $product_config['Email Accounts']; //for total domain
     }
     
     /** Domain Storage Based Limits **/
-    if ( !empty($total_domain_storage) ){
+    if ( !empty($product_config['Disk Space']) ){
       $data['mailboxes'] = $this->UNL_MAILBOXES;
-      $data['maxquota'] = $this->MAILBOXQUOTA, //per mailbox
-      $data['quota'] = $total_domain_storage, //for total domain
+      $data['maxquota'] = $this->MAILBOXQUOTA; //per mailbox
+      $data['quota'] = $product_config['Disk Space']; //for total domain
     }
     
     if ($action != 'disable'){
@@ -150,11 +147,14 @@ class MailcowAPI{
       
     } else {
       
-      $this->_restartSogo(); //on successful creation, restart SOGo
-      
-      //can't use errorCheck function after running _restartSogo().
-      return $this->curl->response;
-      
+      if ($action == 'create'){
+        $this->_restartSogo(); //on successful creation, restart SOGo
+        return $this->curl->response; //can't use errorCheck function after running _restartSogo() as errors are shown differently.
+      }
+      else{
+        return $this->errorCheckedResponse();
+      }
+        
     }
       
   }

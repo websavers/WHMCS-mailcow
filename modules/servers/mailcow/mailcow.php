@@ -67,7 +67,7 @@ function mailcow_ConfigOptions(){
             'Size' => '25',
             'Default' => '1024',
             'Description' => 'Default per mail account storage limit. Enter in megabytes',
-        ),
+        )
     );
 }
 
