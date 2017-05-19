@@ -18,12 +18,17 @@ class MailcowAPI{
   private $cookie;
   public $baseurl;
   public $aliases = 500;
-  public $MAILBOXQUOTA;
+  public $MAILBOXQUOTA = 1024;
+  public $UNL_MAILBOXES = 500;
   
-  public function __construct($server_hostname, $server_login, $server_password, $mquota = 30720){
+  public function __construct($params){
     
-    $this->baseurl = 'https://' . $server_hostname;
-    $this->MAILBOXQUOTA = $mquota;
+    //Module setting for mailbox quota
+    if ( !empty($params['configoption1']) ){
+      $this->MAILBOXQUOTA = $params['configoption1'];
+    }
+    
+    $this->baseurl = 'https://' . $params['serverhostname'];
 
     $this->curl = new Curl();
     $this->curl->setOpt(CURLOPT_FOLLOWLOCATION, true);
@@ -31,8 +36,8 @@ class MailcowAPI{
     $this->curl->setCookieJar(dirname(__FILE__) . '/cookiejar.txt');
     
     $data = array(
-      'login_user' => $server_login,
-      'pass_user' => html_entity_decode($server_password),
+      'login_user' => $params['serverusername'],
+      'pass_user' => html_entity_decode($params['serverpassword']),
     );
     
     //Create session
@@ -45,27 +50,27 @@ class MailcowAPI{
    * Domain functions
    */
   
-  public function addDomain($domain, $num_mailboxes){
+  public function addDomain($params){
     
-    return $this->_addOrEditDomain($domain, $num_mailboxes, 'create');
-    
-  }
-  
-  public function editDomain($domain, $num_mailboxes){
-    
-    return $this->_addOrEditDomain($domain, $num_mailboxes, 'edit');
+    return $this->_addOrEditDomain($params['domain'], $params['configoptions'], 'create');
     
   }
   
-  public function disableDomain($domain, $num_mailboxes){
+  public function editDomain($params){
     
-    return $this->_addOrEditDomain($domain, $num_mailboxes, 'disable');
+    return $this->_addOrEditDomain($params['domain'], $params['configoptions'], 'edit');
     
   }
   
-  public function activateDomain($domain, $num_mailboxes){
+  public function disableDomain($params){
     
-    return $this->_addOrEditDomain($domain, $num_mailboxes, 'activate');
+    return $this->_addOrEditDomain($params['domain'], $params['configoptions'], 'disable');
+    
+  }
+  
+  public function activateDomain($params){
+    
+    return $this->_addOrEditDomain($params['domain'], $params['configoptions'], 'activate');
     
   }
   
@@ -88,18 +93,32 @@ class MailcowAPI{
     
   }
   
-  private function _addOrEditDomain($domain, $num_mailboxes, $action){
+  private function _addOrEditDomain($domain, $product_config, $action){
     
-    $data = array( /** Those commented out hopefully aren't necessary to submit... **/
+    $num_mailboxes = $product_config['Email Accounts'];
+    $total_domain_storage = $product_config['Disk Space'];
+    
+    $data = array(
       'domain' => urlencode($domain),
       'description' => 'None',
       'aliases' => $this->aliases,
-      'mailboxes' => $num_mailboxes,
-      'maxquota' => $this->MAILBOXQUOTA, //per mailbox
-      'quota' => $this->MAILBOXQUOTA * $num_mailboxes, //for domain
       //'backupmx' => 'on',
       //'relay_all_recipients' => 'on',
     );
+    
+    /** Number of Mailbox Based Limits **/
+    if ( !empty($num_mailboxes) ){
+      $data['mailboxes'] = $num_mailboxes;
+      $data['maxquota'] = $this->MAILBOXQUOTA, //per mailbox
+      $data['quota'] = $this->MAILBOXQUOTA * $num_mailboxes, //for total domain
+    }
+    
+    /** Domain Storage Based Limits **/
+    if ( !empty($total_domain_storage) ){
+      $data['mailboxes'] = $this->UNL_MAILBOXES;
+      $data['maxquota'] = $this->MAILBOXQUOTA, //per mailbox
+      $data['quota'] = $total_domain_storage, //for total domain
+    }
     
     if ($action != 'disable'){
       $data['active'] = 'on';

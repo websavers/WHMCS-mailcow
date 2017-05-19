@@ -60,53 +60,15 @@ function mailcow_MetaData()
  * @return array
  */
 function mailcow_ConfigOptions(){
-  
-/*
+
     return array(
-        // a text field type allows for single line text input
-        'Text Field' => array(
+        'Default Mailbox Quota' => array(
             'Type' => 'text',
             'Size' => '25',
             'Default' => '1024',
-            'Description' => 'Enter in megabytes',
-        ),
-        // a password field type allows for masked text input
-        'Password Field' => array(
-            'Type' => 'password',
-            'Size' => '25',
-            'Default' => '',
-            'Description' => 'Enter secret value here',
-        ),
-        // the yesno field type displays a single checkbox option
-        'Checkbox Field' => array(
-            'Type' => 'yesno',
-            'Description' => 'Tick to enable',
-        ),
-        // the dropdown field type renders a select menu of options
-        'Dropdown Field' => array(
-            'Type' => 'dropdown',
-            'Options' => array(
-                'option1' => 'Display Value 1',
-                'option2' => 'Second Option',
-                'option3' => 'Another Option',
-            ),
-            'Description' => 'Choose one',
-        ),
-        // the radio field type displays a series of radio button options
-        'Radio Field' => array(
-            'Type' => 'radio',
-            'Options' => 'First Option,Second Option,Third Option',
-            'Description' => 'Choose your option!',
-        ),
-        // the textarea field type allows for multi-line text input
-        'Textarea Field' => array(
-            'Type' => 'textarea',
-            'Rows' => '3',
-            'Cols' => '60',
-            'Description' => 'Freeform multi-line text input field',
+            'Description' => 'Default per mail account storage limit. Enter in megabytes',
         ),
     );
-*/
 }
 
 /**
@@ -129,8 +91,8 @@ function mailcow_CreateAccount(array $params)
 {
     try {
       
-      $mailcow = new MailcowAPI($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
-      $result = $mailcow->addDomain($params['domain'], $params['configoptions']['Email Accounts']);
+      $mailcow = new MailcowAPI($params);
+      $result = $mailcow->addDomain($params);
       
       logModuleCall(
           'mailcow',
@@ -184,8 +146,8 @@ function mailcow_SuspendAccount(array $params)
 {
     try {
       
-      $mailcow = new MailcowAPI($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
-      $result = $mailcow->disableDomain($params['domain'], $params['configoptions']['Email Accounts']);
+      $mailcow = new MailcowAPI($params);
+      $result = $mailcow->disableDomain($params);
       
       logModuleCall(
           'mailcow',
@@ -239,8 +201,8 @@ function mailcow_UnsuspendAccount(array $params)
 {
     try {
       
-      $mailcow = new MailcowAPI($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
-      $result = $mailcow->activateDomain($params['domain'], $params['configoptions']['Email Accounts']);
+      $mailcow = new MailcowAPI($params);
+      $result = $mailcow->activateDomain($params);
       
       logModuleCall(
           'mailcow',
@@ -293,7 +255,7 @@ function mailcow_TerminateAccount(array $params)
 {
     try {
       
-      $mailcow = new MailcowAPI($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
+      $mailcow = new MailcowAPI($params);
       
       //Remove Mailboxes
       $result = $mailcow->removeAllMailboxes($params['domain']);
@@ -365,7 +327,7 @@ function mailcow_ChangePassword(array $params)
 {
     try {
       
-      $mailcow = new MailcowAPI($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
+      $mailcow = new MailcowAPI($params);
       
       $result = $mailcow->changePasswordDomainAdmin($params['domain'], $params['username'], $params['password']);
       
@@ -413,8 +375,8 @@ function mailcow_ChangePackage(array $params)
 {
     try {
         
-        $mailcow = new MailcowAPI($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
-        $result = $mailcow->editDomain($params['domain'], $params['configoptions']['Email Accounts']);
+        $mailcow = new MailcowAPI($params);
+        $result = $mailcow->editDomain($params);
         
         logModuleCall(
             'mailcow',
@@ -969,7 +931,7 @@ function mailcow_UsageUpdate($params) {
     
     try {
       
-      $mailcow = new MailcowAPI($params['serverhostname'], $params['serverusername'], $params['serverpassword']);
+      $mailcow = new MailcowAPI($params);
       $domainsUsage = $mailcow->getUsageStats($domains);
       
       logModuleCall(
