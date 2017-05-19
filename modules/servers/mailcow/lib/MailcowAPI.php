@@ -110,10 +110,13 @@ class MailcowAPI{
       $data['quota'] = $this->MAILBOXQUOTA * $product_config['Email Accounts']; //for total domain
     }
     
+    //logActivity($product_config['Disk Space']); ////DEBUG
+    logActivity($this->MAILBOXQUOTA); ////DEBUG
+    
     /** Domain Storage Based Limits **/
     if ( !empty($product_config['Disk Space']) ){
       $data['mailboxes'] = $this->UNL_MAILBOXES;
-      $data['maxquota'] = $this->MAILBOXQUOTA; //per mailbox
+      $data['maxquota'] = $product_config['Disk Space']; //per mailbox
       $data['quota'] = $product_config['Disk Space']; //for total domain
     }
     
