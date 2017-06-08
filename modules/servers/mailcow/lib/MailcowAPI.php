@@ -278,11 +278,43 @@ class MailcowAPI{
     
   }
   
+  public function removeAllResources($domain){
+    
+    if ( isset($domain) && !empty($domain) ){
+      
+      $resources = $this->_getResources();
+      
+      foreach ($resources as $rinfo){
+        if ( $rinfo->domain === $domain ){
+            $this->_removeResource($rinfo->name);
+        }
+      }
+      
+    }
+    else{
+      return "Error: Domain not provided.";
+    }
+    
+  }
+  
   private function _removeMailbox($mailbox){
     
     $data = array(
       'username' => $mailbox,
       'mailbox_delete_mailbox' => '',
+    );
+    
+    $this->curl->post($this->baseurl . '/mailbox.php', $data);
+    
+    return $this->errorCheckedResponse();
+    
+  }
+  
+  private function _removeResource($name){
+    
+    $data = array(
+      'name' => $name,
+      'mailbox_delete_resource' => '',
     );
     
     $this->curl->post($this->baseurl . '/mailbox.php', $data);
@@ -321,6 +353,12 @@ class MailcowAPI{
   private function _getMailboxes(){
     
     return json_decode( $this->curl->get( $this->baseurl . '/api/v1/mailbox/all', array() ) );
+    
+  }
+  
+  private function _getResources(){
+    
+    return json_decode( $this->curl->get( $this->baseurl . '/api/v1/resource/all', array() ) );
     
   }
   
