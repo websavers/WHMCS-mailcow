@@ -268,6 +268,17 @@ function mailcow_TerminateAccount(array $params)
           null
       );
       
+      //Remove Resources
+      $result = $mailcow->removeAllResources($params['domain']);
+      
+      logModuleCall(
+          'mailcow',
+          __FUNCTION__,
+          $params,
+          print_r($result, true),
+          null
+      );
+      
       //Remove Domain
       $result = $mailcow->removeDomain($params['domain']);
       

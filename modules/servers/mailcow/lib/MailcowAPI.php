@@ -82,7 +82,7 @@ class MailcowAPI{
   
   private function _removeDomain($domain){
     
-    $data = array( /** Those commented out hopefully aren't necessary to submit... **/
+    $data = array(
       'domain' => urlencode($domain),
       'mailbox_delete_domain' => '',
     );
