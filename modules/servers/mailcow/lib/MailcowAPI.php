@@ -32,6 +32,7 @@ class MailcowAPI{
 
     $this->curl = new Curl();
     $this->curl->setOpt(CURLOPT_FOLLOWLOCATION, true);
+    $this->curl->setOpt(CURLOPT_SSL_VERIFYPEER, false); //ignore certificate issues
     $this->curl->setCookieFile('');
     $this->curl->setCookieJar(dirname(__FILE__) . '/cookiejar.txt');
     
@@ -42,6 +43,13 @@ class MailcowAPI{
     
     //Create session
     $this->curl->post($this->baseurl, $data);
+    if ($this->curl->error) {
+      
+      //throw new Exception('Error creating session using identifier: ' . $this->identifier);
+      throw new Exception('Error creating session: ' . $this->curl->errorMessage);
+      
+    }
+  
     //$this->cookie = $this->curl->getCookie('PHPSESSID');
         
   }

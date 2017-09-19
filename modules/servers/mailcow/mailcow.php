@@ -92,6 +92,22 @@ function mailcow_CreateAccount(array $params)
     try {
       
       $mailcow = new MailcowAPI($params);
+      
+    } catch (Exception $e) {
+        // Record the error in WHMCS's module log.
+        logModuleCall(
+            'mailcow',
+            __FUNCTION__,
+            $params,
+            $e->getMessage(),
+            $e->getTraceAsString()
+        );
+
+        return $e->getMessage();
+    }
+      
+    try {
+      
       $result = $mailcow->addDomain($params);
       
       logModuleCall(
