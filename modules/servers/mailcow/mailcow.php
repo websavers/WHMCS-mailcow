@@ -97,7 +97,7 @@ function mailcow_CreateAccount(array $params)
         // Record the error in WHMCS's module log.
         logModuleCall(
             'mailcow',
-            __FUNCTION__,
+            __FUNCTION__ . ": Init API",
             $params,
             $e->getMessage(),
             $e->getTraceAsString()
@@ -112,7 +112,7 @@ function mailcow_CreateAccount(array $params)
       
       logModuleCall(
           'mailcow',
-          __FUNCTION__,
+          __FUNCTION__ . ": Add Domain",
           $params,
           print_r($result, true),
           null
@@ -122,7 +122,7 @@ function mailcow_CreateAccount(array $params)
       
       logModuleCall(
           'mailcow',
-          __FUNCTION__,
+          __FUNCTION__ . ": Add Domain Admin",
           $params,
           print_r($result, true),
           null
