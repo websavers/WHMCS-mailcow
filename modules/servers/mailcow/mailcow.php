@@ -89,6 +89,7 @@ function mailcow_ConfigOptions(){
  */
 function mailcow_CreateAccount(array $params)
 {
+          
     try {
       
       $mailcow = new MailcowAPI($params);
@@ -110,13 +111,7 @@ function mailcow_CreateAccount(array $params)
       
       $result = $mailcow->addDomain($params);
       
-      logModuleCall(
-          'mailcow',
-          __FUNCTION__ . ": Add Domain",
-          print_r($params, true),
-          print_r($result, true),
-          null
-      );
+      if ($result['error']) return $result['error_message'];
       
       $result = $mailcow->addDomainAdmin($params['domain'], $params['username'], $params['password']);
       
@@ -127,6 +122,8 @@ function mailcow_CreateAccount(array $params)
           print_r($result, true),
           null
       );
+      
+      if ($result['error']) return $result['error_message'];
       
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.

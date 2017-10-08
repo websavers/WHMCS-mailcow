@@ -60,25 +60,25 @@ class MailcowAPI{
   
   public function addDomain($params){
     
-    return $this->_addOrEditDomain($params['domain'], $params['configoptions'], 'create');
+    return $this->_manageDomain($params['domain'], $params['configoptions'], 'create');
     
   }
   
   public function editDomain($params){
     
-    return $this->_addOrEditDomain($params['domain'], $params['configoptions'], 'edit');
+    return $this->_manageDomain($params['domain'], $params['configoptions'], 'edit');
     
   }
   
   public function disableDomain($params){
     
-    return $this->_addOrEditDomain($params['domain'], $params['configoptions'], 'disable');
+    return $this->_manageDomain($params['domain'], $params['configoptions'], 'disable');
     
   }
   
   public function activateDomain($params){
     
-    return $this->_addOrEditDomain($params['domain'], $params['configoptions'], 'activate');
+    return $this->_manageDomain($params['domain'], $params['configoptions'], 'activate');
     
   }
   
@@ -101,7 +101,7 @@ class MailcowAPI{
     
   }
   
-  private function _addOrEditDomain($domain, $product_config, $action){
+  private function _manageDomain($domain, $product_config, $action){
     
     $data = array(
       'domain' => urlencode($domain),
@@ -119,7 +119,7 @@ class MailcowAPI{
     }
     
     //logActivity($product_config['Disk Space']); ////DEBUG
-    logActivity($this->MAILBOXQUOTA); ////DEBUG
+    //logActivity($this->MAILBOXQUOTA); ////DEBUG
     
     /** Domain Storage Based Limits **/
     if ( !empty($product_config['Disk Space']) ){
@@ -148,24 +148,23 @@ class MailcowAPI{
     }
     
     $this->curl->post($this->baseurl . '/mailbox.php', $data);
-    
-    if ($this->curl->error) {
-      
-      return array( 
-        'error' => $this->curl->errorCode,
-        'error_message' => $this->curl->errorMessage,
-      );
-      
-    } else {
-      
-      if ($action == 'create'){
-        $this->_restartSogo(); //on successful creation, restart SOGo
-        return $this->curl->response; //can't use errorCheck function after running _restartSogo() as errors are shown differently.
-      }
-      else{
-        return $this->errorCheckedResponse();
-      }
         
+    $result = $this->errorCheckedResponse(); //This will throw an exception if there's any problems
+    
+    logModuleCall(
+        'mailcow',
+        __FUNCTION__ . '_' . $action . '_domain',
+        print_r($data, true),
+        print_r($result, true),
+        null
+    );
+        
+    if ( $action == 'create' ){
+      $this->_restartSogo(); //on successful creation, restart SOGo
+      return $this->curl->response; //can't use errorCheck function after running _restartSogo() as errors are shown differently.
+    }
+    else{
+      return $result;
     }
       
   }
@@ -177,31 +176,31 @@ class MailcowAPI{
    
    public function addDomainAdmin($domain, $username, $password){
      
-     return $this->_addOrEditDomainAdmin($domain, $username, $password, 'create');
+     return $this->_manageDomainAdmin($domain, $username, $password, 'create');
      
    }
    
    public function editDomainAdmin($domain, $username){
      
-     return $this->_addOrEditDomainAdmin($domain, $username, null, 'edit');
+     return $this->_manageDomainAdmin($domain, $username, null, 'edit');
      
    }
    
    public function disableDomainAdmin($domain, $username){
      
-     return $this->_addOrEditDomainAdmin($domain, $username, null, 'disable');
+     return $this->_manageDomainAdmin($domain, $username, null, 'disable');
      
    }
    
    public function activateDomainAdmin($domain, $username){
      
-     return $this->_addOrEditDomainAdmin($domain, $username, null, 'activate');
+     return $this->_manageDomainAdmin($domain, $username, null, 'activate');
      
    }
    
    public function changePasswordDomainAdmin($domain, $username, $password){
      
-     return $this->_addOrEditDomainAdmin($domain, $username, $password, 'changepass');
+     return $this->_manageDomainAdmin($domain, $username, $password, 'changepass');
      
    }
    
@@ -224,7 +223,7 @@ class MailcowAPI{
        
    }
   
-  private function _addOrEditDomainAdmin($domain, $username, $password, $action){
+  private function _manageDomainAdmin($domain, $username, $password, $action){
     
     $data = array(
       'username' => $username,
@@ -263,7 +262,17 @@ class MailcowAPI{
     
     $this->curl->post($this->baseurl . '/admin.php', $data);
     
-    return $this->errorCheckedResponse();
+    $result = $this->errorCheckedResponse();
+    
+    logModuleCall(
+        'mailcow',
+        __FUNCTION__ . '_' . $action . '_domain_admin',
+        print_r($data, true),
+        print_r($result, true),
+        null
+    );
+    
+    return $result;
     
   }
   
@@ -404,6 +413,7 @@ class MailcowAPI{
   
   private function errorCheckedResponse(){
     
+    // first check for standard HTTP errors like 404
     if ($this->curl->error) {
       
       return array( 
@@ -411,28 +421,29 @@ class MailcowAPI{
         'error_message' => $this->curl->errorMessage,
       );
       
-    } else {
+    } 
+    // then check for on-page mailcow specific errors
+    else {
       
-      return $this->errorCheck( $this->curl->response );
+      $response = $this->curl->response;
       
-    }
-    
-  }
-  
-  /* Takes an HTML response string as input, parses for errors */
-  private function errorCheck($response){
-    
-    $error_pattern = '/<div.*alert-danger.*<\/a>(.*)<\/div>/sim';
-    $success_pattern = '/<div.*alert-success.*<\/a>(.*)<\/div>/sim';
-    
-    if ( preg_match($success_pattern, $response, $matches) ){
-      return strip_tags( $matches[1] );
-    }
-    else if ( preg_match($error_pattern, $response, $matches) ){
-      throw new \Exception( 'Error: ' . strip_tags($matches[1]) );
-    }
-    else{
-      throw new \Exception( 'Error: unexpected response' );
+      $error_pattern = '/<div.*alert-danger.*<\/a>(.*)<\/div>/sim';
+      $success_pattern = '/<div.*alert-success.*<\/a>(.*)<\/div>/sim';
+      
+        // if success notice found on response, return it!
+      if ( preg_match($success_pattern, $response, $matches) ){
+        return strip_tags( $matches[1] );
+      }
+        // if failure notice found on response, throw an exception
+      else if ( preg_match($error_pattern, $response, $matches) ){
+        throw new \Exception( 'Error: ' . strip_tags($matches[1]) );
+      }
+        // if we get anything else, throw an exception
+      else{
+        logActivity( htmlspecialchars($response), true );
+        throw new \Exception( 'Error: Unexpected response. Check activity log for details.');
+      }
+      
     }
     
   }
