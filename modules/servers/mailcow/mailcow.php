@@ -98,7 +98,7 @@ function mailcow_CreateAccount(array $params)
         logModuleCall(
             'mailcow',
             __FUNCTION__ . ": Init API",
-            $params,
+            print_r($params, true),
             $e->getMessage(),
             $e->getTraceAsString()
         );
@@ -113,7 +113,7 @@ function mailcow_CreateAccount(array $params)
       logModuleCall(
           'mailcow',
           __FUNCTION__ . ": Add Domain",
-          $params,
+          print_r($params, true),
           print_r($result, true),
           null
       );
@@ -123,7 +123,7 @@ function mailcow_CreateAccount(array $params)
       logModuleCall(
           'mailcow',
           __FUNCTION__ . ": Add Domain Admin",
-          $params,
+          print_r($params, true),
           print_r($result, true),
           null
       );
@@ -133,7 +133,7 @@ function mailcow_CreateAccount(array $params)
         logModuleCall(
             'mailcow',
             __FUNCTION__,
-            $params,
+            print_r($params, true),
             $e->getMessage(),
             $e->getTraceAsString()
         );
@@ -168,7 +168,7 @@ function mailcow_SuspendAccount(array $params)
       logModuleCall(
           'mailcow',
           __FUNCTION__,
-          $params,
+          print_r($params, true),
           print_r($result, true),
           null
       );
@@ -178,7 +178,7 @@ function mailcow_SuspendAccount(array $params)
       logModuleCall(
           'mailcow',
           __FUNCTION__,
-          $params,
+          print_r($params, true),
           print_r($result, true),
           null
       );
@@ -188,7 +188,7 @@ function mailcow_SuspendAccount(array $params)
         logModuleCall(
             'mailcow',
             __FUNCTION__,
-            $params,
+            print_r($params, true),
             $e->getMessage(),
             $e->getTraceAsString()
         );
@@ -223,7 +223,7 @@ function mailcow_UnsuspendAccount(array $params)
       logModuleCall(
           'mailcow',
           __FUNCTION__,
-          $params,
+          print_r($params, true),
           print_r($result, true),
           null
       );
@@ -233,7 +233,7 @@ function mailcow_UnsuspendAccount(array $params)
       logModuleCall(
           'mailcow',
           __FUNCTION__,
-          $params,
+          print_r($params, true),
           print_r($result, true),
           null
       );
@@ -243,7 +243,7 @@ function mailcow_UnsuspendAccount(array $params)
         logModuleCall(
             'mailcow',
             __FUNCTION__,
-            $params,
+            print_r($params, true),
             $e->getMessage(),
             $e->getTraceAsString()
         );
@@ -279,7 +279,7 @@ function mailcow_TerminateAccount(array $params)
       logModuleCall(
           'mailcow',
           __FUNCTION__,
-          $params,
+          print_r($params, true),
           print_r($result, true),
           null
       );
@@ -290,7 +290,7 @@ function mailcow_TerminateAccount(array $params)
       logModuleCall(
           'mailcow',
           __FUNCTION__,
-          $params,
+          print_r($params, true),
           print_r($result, true),
           null
       );
@@ -301,7 +301,7 @@ function mailcow_TerminateAccount(array $params)
       logModuleCall(
           'mailcow',
           __FUNCTION__,
-          $params,
+          print_r($params, true),
           print_r($result, true),
           null
       );
@@ -312,7 +312,7 @@ function mailcow_TerminateAccount(array $params)
       logModuleCall(
           'mailcow',
           __FUNCTION__,
-          $params,
+          print_r($params, true),
           print_r($result, true),
           null
       );
@@ -322,7 +322,7 @@ function mailcow_TerminateAccount(array $params)
         logModuleCall(
             'mailcow',
             __FUNCTION__,
-            $params,
+            print_r($params, true),
             $e->getMessage(),
             $e->getTraceAsString()
         );
@@ -361,7 +361,7 @@ function mailcow_ChangePassword(array $params)
       logModuleCall(
           'mailcow',
           __FUNCTION__,
-          $params,
+          print_r($params, true),
           print_r($result, true),
           null
       );
@@ -371,7 +371,7 @@ function mailcow_ChangePassword(array $params)
         logModuleCall(
             'mailcow',
             __FUNCTION__,
-            $params,
+            print_r($params, true),
             $e->getMessage(),
             $e->getTraceAsString()
         );
@@ -408,7 +408,7 @@ function mailcow_ChangePackage(array $params)
         logModuleCall(
             'mailcow',
             __FUNCTION__,
-            $params,
+            print_r($params, true),
             print_r($result, true),
             null
         );
@@ -418,7 +418,7 @@ function mailcow_ChangePackage(array $params)
         logModuleCall(
             'mailcow',
             __FUNCTION__,
-            $params,
+            print_r($params, true),
             $e->getMessage(),
             $e->getTraceAsString()
         );
@@ -458,7 +458,7 @@ function mailcow_TestConnection(array $params)
         logModuleCall(
             'mailcow',
             __FUNCTION__,
-            $params,
+            print_r($params, true),
             $e->getMessage(),
             $e->getTraceAsString()
         );
