@@ -89,51 +89,23 @@ function mailcow_ConfigOptions(){
  */
 function mailcow_CreateAccount(array $params)
 {
-          
+
     try {
       
       $mailcow = new MailcowAPI($params);
-      
+      $result = $mailcow->addDomain($params);
+    
     } catch (Exception $e) {
-        // Record the error in WHMCS's module log.
-        logModuleCall(
-            'mailcow',
-            __FUNCTION__ . ": Init API",
-            print_r($params, true),
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
 
-        return $e->getMessage();
+      return $e->getMessage();
     }
-      
+
     try {
       
-      $result = $mailcow->addDomain($params);
-      
-      if ($result['error']) return $result['error_message'];
-      
-      $result = $mailcow->addDomainAdmin($params['domain'], $params['username'], $params['password']);
-      
-      logModuleCall(
-          'mailcow',
-          __FUNCTION__ . ": Add Domain Admin",
-          print_r($params, true),
-          print_r($result, true),
-          null
-      );
-      
-      if ($result['error']) return $result['error_message'];
+      $mailcow = new MailcowAPI($params);
+      $result = $mailcow->addDomainAdmin($params);
       
     } catch (Exception $e) {
-        // Record the error in WHMCS's module log.
-        logModuleCall(
-            'mailcow',
-            __FUNCTION__,
-            print_r($params, true),
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
 
         return $e->getMessage();
     }
@@ -162,33 +134,17 @@ function mailcow_SuspendAccount(array $params)
       $mailcow = new MailcowAPI($params);
       $result = $mailcow->disableDomain($params);
       
-      logModuleCall(
-          'mailcow',
-          __FUNCTION__,
-          print_r($params, true),
-          print_r($result, true),
-          null
-      );
+    } catch (Exception $e) {
+
+        return $e->getMessage();
+    }
+    
+    try {
       
+      $mailcow = new MailcowAPI($params);
       $result = $mailcow->disableDomainAdmin($params['domain'], $params['username']);
       
-      logModuleCall(
-          'mailcow',
-          __FUNCTION__,
-          print_r($params, true),
-          print_r($result, true),
-          null
-      );
-      
     } catch (Exception $e) {
-        // Record the error in WHMCS's module log.
-        logModuleCall(
-            'mailcow',
-            __FUNCTION__,
-            print_r($params, true),
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
 
         return $e->getMessage();
     }
@@ -217,33 +173,17 @@ function mailcow_UnsuspendAccount(array $params)
       $mailcow = new MailcowAPI($params);
       $result = $mailcow->activateDomain($params);
       
-      logModuleCall(
-          'mailcow',
-          __FUNCTION__,
-          print_r($params, true),
-          print_r($result, true),
-          null
-      );
+    } catch (Exception $e) {
+
+        return $e->getMessage();
+    }
+    
+    try {
       
+      $mailcow = new MailcowAPI($params);
       $result = $mailcow->activateDomainAdmin($params['domain'], $params['username']);
       
-      logModuleCall(
-          'mailcow',
-          __FUNCTION__,
-          print_r($params, true),
-          print_r($result, true),
-          null
-      );
-      
     } catch (Exception $e) {
-        // Record the error in WHMCS's module log.
-        logModuleCall(
-            'mailcow',
-            __FUNCTION__,
-            print_r($params, true),
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
 
         return $e->getMessage();
     }
@@ -268,61 +208,23 @@ function mailcow_TerminateAccount(array $params)
 {
     try {
       
-      $mailcow = new MailcowAPI($params);
-      
       //Remove Mailboxes
+      $mailcow = new MailcowAPI($params);
       $result = $mailcow->removeAllMailboxes($params['domain']);
       
-      logModuleCall(
-          'mailcow',
-          __FUNCTION__,
-          print_r($params, true),
-          print_r($result, true),
-          null
-      );
-      
       //Remove Resources
+      $mailcow = new MailcowAPI($params);
       $result = $mailcow->removeAllResources($params['domain']);
       
-      logModuleCall(
-          'mailcow',
-          __FUNCTION__,
-          print_r($params, true),
-          print_r($result, true),
-          null
-      );
-      
       //Remove Domain
-      $result = $mailcow->removeDomain($params['domain']);
-      
-      logModuleCall(
-          'mailcow',
-          __FUNCTION__,
-          print_r($params, true),
-          print_r($result, true),
-          null
-      );
+      $mailcow = new MailcowAPI($params);
+      $result = $mailcow->removeDomain($params);
       
       //Remove Domain Admin
-      $result = $mailcow->removeDomainAdmin($params['username']);
-      
-      logModuleCall(
-          'mailcow',
-          __FUNCTION__,
-          print_r($params, true),
-          print_r($result, true),
-          null
-      );
+      $mailcow = new MailcowAPI($params);
+      $result = $mailcow->removeDomainAdmin($params);
       
     } catch (Exception $e) {
-        // Record the error in WHMCS's module log.
-        logModuleCall(
-            'mailcow',
-            __FUNCTION__,
-            print_r($params, true),
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
 
         return $e->getMessage();
     }
@@ -352,7 +254,6 @@ function mailcow_ChangePassword(array $params)
     try {
       
       $mailcow = new MailcowAPI($params);
-      
       $result = $mailcow->changePasswordDomainAdmin($params['domain'], $params['username'], $params['password']);
       
       logModuleCall(

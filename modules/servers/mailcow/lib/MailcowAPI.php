@@ -16,6 +16,8 @@ class MailcowAPI{
   
   private $curl;
   private $cookie;
+  private $csrf_token;
+  
   public $baseurl;
   public $aliases = 500;
   public $MAILBOXQUOTA = 1024;
@@ -43,14 +45,14 @@ class MailcowAPI{
     
     //Create session
     $this->curl->post($this->baseurl, $data);
-    if ($this->curl->error) {
-      
-      //throw new Exception('Error creating session using identifier: ' . $this->identifier);
-      throw new Exception('Error creating session: ' . $this->curl->errorMessage);
-      
+    if ($this->curl->error) {  
+      throw new \Exception('Error creating session: ' . $this->curl->errorMessage);
     }
-  
-    //$this->cookie = $this->curl->getCookie('PHPSESSID');
+    else{
+      $this->csrf_token = $this->getToken($this->error_checking('init', $data));
+      //$this->cookie = $this->curl->getCookie('PHPSESSID'); //May not be essential
+      $this->curl->setHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8'); 
+    }
         
   }
   
@@ -82,84 +84,75 @@ class MailcowAPI{
     
   }
   
-  public function removeDomain($domain){
+  public function removeDomain($params){
     
-    return $this->_removeDomain($domain);
+    return $this->_manageDomain($params['domain'], $params['configoptions'], 'remove');
       
-  }
-  
-  private function _removeDomain($domain){
-    
-    $data = array(
-      'domain' => urlencode($domain),
-      'mailbox_delete_domain' => '',
-    );
-    
-    $this->curl->post($this->baseurl . '/mailbox.php', $data);
-    
-    return $this->errorCheckedResponse();
-    
   }
   
   private function _manageDomain($domain, $product_config, $action){
     
-    $data = array(
-      'domain' => urlencode($domain),
-      'description' => 'None',
+    $attr = array(
+      'description' => '',
       'aliases' => $this->aliases,
-      //'backupmx' => 'on',
-      //'relay_all_recipients' => 'on',
+      //'backupmx' => 0,
+      //'relay_all_recipients' => 0,
     );
     
     /** Number of Mailbox Based Limits **/
     if ( !empty($product_config['Email Accounts']) ){
-      $data['mailboxes'] = $product_config['Email Accounts'];
-      $data['maxquota'] = $this->MAILBOXQUOTA; //per mailbox
-      $data['quota'] = $this->MAILBOXQUOTA * $product_config['Email Accounts']; //for total domain
+      $attr['mailboxes'] = $product_config['Email Accounts'];
+      $attr['maxquota'] = $this->MAILBOXQUOTA; //per mailbox
+      $attr['quota'] = $this->MAILBOXQUOTA * $product_config['Email Accounts']; //for total domain
     }
-    
-    //logActivity($product_config['Disk Space']); ////DEBUG
-    //logActivity($this->MAILBOXQUOTA); ////DEBUG
-    
+        
     /** Domain Storage Based Limits **/
     if ( !empty($product_config['Disk Space']) ){
-      $data['mailboxes'] = $this->UNL_MAILBOXES;
-      $data['maxquota'] = $product_config['Disk Space']; //per mailbox
-      $data['quota'] = $product_config['Disk Space']; //for total domain
+      $attr['mailboxes'] = $this->UNL_MAILBOXES;
+      $attr['maxquota'] = $product_config['Disk Space']; //per mailbox
+      $attr['quota'] = $product_config['Disk Space']; //for total domain
     }
-    
-    if ($action != 'disable'){
-      $data['active'] = 'on';
-    }
-    
-    //logActivity("Add a domain? $addDomain"); //DEBUG
+        
+    $uri = '/api/v1/edit/domain';
     
     switch ($action){
       
-      case 'create':
-        $data['mailbox_add_domain'] = '';
+      case 'create':       
+        $uri = '/api/v1/add/domain';
+        $attr['domain'] = $domain;
+        $attr['active'] = 1;
         break;
       case 'edit':
       case 'disable':
+        $data['items'] = json_encode(array($domain));
+        $attr['active'] = 0;
+        break;
       case 'activate':
-        $data['mailbox_edit_domain'] = '';
+        $data['items'] = json_encode(array($domain));
+        $attr['active'] = array('0','1');
+        break;
+      case 'remove':
+        $uri = '/api/v1/delete/domain';
+        $data['items'] = json_encode(array($domain));
         break;
         
     }
+    /* For some reason they include it twice. Once as part of attr and once outside */
+    $attr['csrf_token'] = $this->csrf_token;
+    $data['csrf_token'] = $this->csrf_token; 
     
-    $this->curl->post($this->baseurl . '/mailbox.php', $data);
+    $data['attr'] = json_encode($attr);
         
-    $result = $this->errorCheckedResponse(); //This will throw an exception if there's any problems
+    $this->curl->post($this->baseurl . $uri, $data);
     
-    logModuleCall(
-        'mailcow',
-        __FUNCTION__ . '_' . $action . '_domain',
-        print_r($data, true),
-        print_r($result, true),
-        null
-    );
-        
-    if ( $action == 'create' ){
+    try{
+      $result = $this->error_checking($uri, $data); 
+    }
+    catch (Exception $e) {
+      return $e->getMessage();
+    }
+            
+    if ( $action == 'create' && empty($this->curl->error) ){
       $this->_restartSogo(); //on successful creation, restart SOGo
       return $this->curl->response; //can't use errorCheck function after running _restartSogo() as errors are shown differently.
     }
@@ -174,9 +167,9 @@ class MailcowAPI{
    * Domain Administrator Functions
    */
    
-   public function addDomainAdmin($domain, $username, $password){
-     
-     return $this->_manageDomainAdmin($domain, $username, $password, 'create');
+   public function addDomainAdmin($params){
+    
+     return $this->_manageDomainAdmin($params['domain'], $params['username'], $params['password'], 'create');
      
    }
    
@@ -204,73 +197,66 @@ class MailcowAPI{
      
    }
    
-   public function removeDomainAdmin($username){
+   public function removeDomainAdmin($params){
      
-     return $this->_removeDomainAdmin($username);
+     return $this->_manageDomainAdmin($params['domain'], $params['username'], null, 'remove');
      
-   }
-   
-   private function _removeDomainAdmin($username){
-     
-     $data = array( /** Those commented out hopefully aren't necessary to submit... **/
-       'username' => $username,
-       'delete_domain_admin' => '',
-     );
-     
-     $this->curl->post($this->baseurl . '/admin.php', $data);
-     
-     return $this->errorCheckedResponse();
-       
    }
   
   private function _manageDomainAdmin($domain, $username, $password, $action){
-    
-    $data = array(
-      'username' => $username,
-      'domain[]' => urlencode($domain),
-    );
-    
-    if ($action == 'create' || $action == 'changepass'){
-      $data['password'] = $password;
-      $data['password2'] = $password;
-    }
-    else{
-      $data['password'] = '';
-      $data['password2'] = '';
-    }
-    
-    if ($action != 'disable'){
-      $data['active'] = 'on';
-    }
-    
-    //logActivity("Add a domain? $addDomain"); //DEBUG
+        
+    $uri = '/api/v1/edit/domain-admin'; //default
     
     switch ($action){
       
       case 'create':
-        $data['add_domain_admin'] = '';
+        $uri = '/api/v1/add/domain-admin';
+        $attr['domains'] = $domain;
+        $attr['username'] = $username;
+        $attr['password'] = $password;
+        $attr['password2'] = $password;
+        $attr['active'] = 1;
         break;
       case 'edit':
-      case 'disable':
-      case 'activate':
       case 'changepass':
-        $data['username_now'] = $username;
-        $data['edit_domain_admin'] = '';
+        $data['items'] = json_encode(array($username));
+        $attr['domains'] = $domain;
+        $attr['username_new'] = $username;
+        $attr['password'] = $password;
+        $attr['password2'] = $password;
+        $attr['active'] = 1;
+        break;
+      case 'disable':
+        $data['items'] = array($username);
+        $attr['active'] = 0;
+        break;
+      case 'activate':
+        $data['items'] = json_encode(array($username));
+        $attr['active'] = array('0','1');
+        $attr['username_new'] = $username;
+        $attr['domains'] = $domain;
+        $attr['password'] = $password;
+        $attr['password2'] = $password;
+        break;
+      case 'remove':
+        $data['items'] = json_encode(array($username));
+        $uri = '/api/v1/delete/domain-admin';
         break;
         
     }
     
-    $this->curl->post($this->baseurl . '/admin.php', $data);
+    $attr['csrf_token'] = $this->csrf_token; 
+    $data['csrf_token'] = $this->csrf_token;
+    $data['attr'] = json_encode($attr);
+        
+    $this->curl->post($this->baseurl . $uri, $data);
     
-    $result = $this->errorCheckedResponse();
-    
-    logModuleCall(
-        'mailcow',
-        __FUNCTION__ . '_' . $action . '_domain_admin',
-        print_r($data, true),
-        print_r($result, true),
-        null
-    );
+    try{
+      $result = $this->error_checking($uri, $data); 
+    }
+    catch (Exception $e) {
+      return $e->getMessage();
+    }
     
     return $result;
     
@@ -323,7 +309,7 @@ class MailcowAPI{
     
     $this->curl->post($this->baseurl . '/mailbox.php', $data);
     
-    return $this->errorCheckedResponse();
+    return $this->error_checking();
     
   }
   
@@ -336,7 +322,7 @@ class MailcowAPI{
     
     $this->curl->post($this->baseurl . '/mailbox.php', $data);
     
-    return $this->errorCheckedResponse();
+    return $this->error_checking();
     
   }
   
@@ -381,7 +367,7 @@ class MailcowAPI{
   
   private function _restartSogo(){
     
-    $this->curl->get( $this->baseurl . '/call_sogo_ctrl.php', array('ACTION' => 'stop') );
+    $this->curl->get( $this->baseurl . '/inc/call_sogo_ctrl.php', array('ACTION' => 'stop') );
     
     if ($this->curl->error) {
       
@@ -392,7 +378,7 @@ class MailcowAPI{
       
     } else {
       
-      $this->curl->get( $this->baseurl . '/call_sogo_ctrl.php', array('ACTION' => 'start') );
+      $this->curl->get( $this->baseurl . '/inc/call_sogo_ctrl.php', array('ACTION' => 'start') );
       
       if ($this->curl->error) {
         
@@ -411,39 +397,39 @@ class MailcowAPI{
     
   }
   
-  private function errorCheckedResponse(){
+  private function error_checking($action = null, $data_sent = null){
     
     // first check for standard HTTP errors like 404
-    if ($this->curl->error) {
-      
-      return array( 
-        'error' => $this->curl->errorCode,
-        'error_message' => $this->curl->errorMessage,
-      );
-      
+    if ($this->curl->error){
+      throw new \Exception($this->curl->errorCode . ': ' . $this->curl->errorMessage);
     } 
-    // then check for on-page mailcow specific errors
+    // then check for mailcow errors
     else {
+      $json = $this->curl->response;
       
-      $response = $this->curl->response;
-      
-      $error_pattern = '/<div.*alert-danger.*<\/a>(.*)<\/div>/sim';
-      $success_pattern = '/<div.*alert-success.*<\/a>(.*)<\/div>/sim';
-      
-        // if success notice found on response, return it!
-      if ( preg_match($success_pattern, $response, $matches) ){
-        return strip_tags( $matches[1] );
+      logModuleCall(
+          'mailcow',
+          $action,
+          print_r($data_sent, true),
+          print_r($json, true),
+          null
+      );
+
+      if ($json->type == "error" || $json->type == "danger"){
+        throw new \Exception($json->msg);
       }
-        // if failure notice found on response, throw an exception
-      else if ( preg_match($error_pattern, $response, $matches) ){
-        throw new \Exception( 'Error: ' . strip_tags($matches[1]) );
-      }
-        // if we get anything else, throw an exception
-      else{
-        logActivity( htmlspecialchars($response), true );
-        throw new \Exception( 'Error: Unexpected response. Check activity log for details.');
-      }
-      
+    }
+    
+    return $this->curl->response;
+    
+  }
+  
+  private function getToken($html){
+    
+    $token_pattern = "/var csrf_token = '([A-Za-z\d]+)';/sim";
+    
+    if ( preg_match($token_pattern, $html, $matches) ){
+      return strip_tags( $matches[1] );
     }
     
   }
