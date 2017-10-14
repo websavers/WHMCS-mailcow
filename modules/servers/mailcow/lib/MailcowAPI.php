@@ -352,19 +352,55 @@ class MailcowAPI{
   
   private function _getDomains(){
     
-    return json_decode( $this->curl->get( $this->baseurl . '/api/v1/get/domain/all', array() ) );
+    $uri = '/api/v1/get/domain/all';
+    $data = array();
+    
+    $this->curl->get( $this->baseurl . $uri, $data );
+    
+    try{
+      $result = $this->error_checking($uri, $data); 
+    }
+    catch (Exception $e) {
+      return $e->getMessage();
+    }
+    
+    return json_decode( $result );
     
   }
   
   private function _getMailboxes(){
     
-    return json_decode( $this->curl->get( $this->baseurl . '/api/v1/get/mailbox/all', array() ) );
+    $uri = '/api/v1/get/mailbox/all';
+    $data = array();
+    
+    $this->curl->get( $this->baseurl . $uri, $data );
+    
+    try{
+      $result = $this->error_checking($uri, $data); 
+    }
+    catch (Exception $e) {
+      return $e->getMessage();
+    }
+    
+    return json_decode( $result );
     
   }
   
   private function _getResources(){
     
-    return json_decode( $this->curl->get( $this->baseurl . '/api/v1/get/resource/all', array() ) );
+    $uri = '/api/v1/get/resource/all';
+    $data = array();
+    
+    $this->curl->get( $this->baseurl . $uri, $data );
+    
+    try{
+      $result = $this->error_checking($uri, $data); 
+    }
+    catch (Exception $e) {
+      return $e->getMessage();
+    }
+    
+    return json_decode( $result ); 
     
   }
   
