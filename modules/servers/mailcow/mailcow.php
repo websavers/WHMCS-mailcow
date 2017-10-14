@@ -891,8 +891,8 @@ function mailcow_UsageUpdate($params) {
                 array(
                     "diskusage" => $usage['diskusage'],
                     "disklimit" => $usage['disklimit'],
-                    "bwusage" => $usage['bwusage'],
-                    "bwlimit" => $usage['bwlimit'],
+                    //"bwusage" => $usage['bwusage'],
+                    //"bwlimit" => $usage['bwlimit'],
                     "lastupdate" => Capsule::table('tblhosting')->raw('now()'),
                 )
             );
