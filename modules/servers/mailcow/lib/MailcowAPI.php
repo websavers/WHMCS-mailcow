@@ -336,14 +336,14 @@ class MailcowAPI{
     foreach ($domains_d as $dominfo){
       //Init disk usage to 0 and set quota to actual value. 
       $usagedata[$dominfo->domain_name] = array( 
-          'disklimit' => ($dominfo->max_quota_for_domain)/(1024*1024), 
+          'disklimit' => (float) ($dominfo->max_quota_for_domain)/(1024*1024), 
           'diskusage' => 0,
       );
     }
 
     foreach ($mailboxes_d as $mbinfo){
       //Increase disk usage for domain by this mailboxes' usage
-      $usagedata[$mbinfo->domain]['diskusage'] += ($mbinfo->quota_used)/(1024*1024);
+      $usagedata[$mbinfo->domain]['diskusage'] += (float) ($mbinfo->quota_used)/(1024*1024);
     }
     
     return $usagedata;
