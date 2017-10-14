@@ -326,25 +326,25 @@ class MailcowAPI{
     
   }
   
+  /* We don't actually use $domains */
   public function getUsageStats($domains){
-    
-    $domains_d = $this->_getDomains();
-    $mailboxes_d = $this->_getMailboxes();
         
     $usagedata = array();
     
-    foreach ($domains_d as $dominfo){
+    foreach ($this->_getDomains() as $domain){
       //Init disk usage to 0 and set quota to actual value. 
-      $usagedata[$dominfo->domain_name] = array( 
-          'disklimit' => (float) ($dominfo->max_quota_for_domain / (1024*1024)), 
+      $usagedata[$domain->domain_name] = array( 
+          'disklimit' => (float) ($domain->max_quota_for_domain / (1024*1024)), 
           'diskusage' => 0,
       );
     }
 
-    foreach ($mailboxes_d as $mbinfo){
+    foreach ($this->_getMailboxes() as $mailbox){
       //Increase disk usage for domain by this mailboxes' usage
-      $usagedata[$mbinfo->domain]['diskusage'] += (float) ($mbinfo->quota_used / (1024*1024));
+      $usagedata[$mailbox->domain]['diskusage'] += (float) ($mailbox->quota_used / (1024*1024));
     }
+    
+    //logActivity( print_r($usagedata, true) ); ///DEBUG
     
     return $usagedata;
     
@@ -364,7 +364,7 @@ class MailcowAPI{
       return $e->getMessage();
     }
     
-    return json_decode( $result );
+    return $result;
     
   }
   
@@ -382,7 +382,7 @@ class MailcowAPI{
       return $e->getMessage();
     }
     
-    return json_decode( $result );
+    return $result;
     
   }
   
@@ -400,7 +400,7 @@ class MailcowAPI{
       return $e->getMessage();
     }
     
-    return json_decode( $result ); 
+    return $result; 
     
   }
   
