@@ -863,7 +863,7 @@ function mailcow_UsageUpdate($params) {
           'mailcow',
           __FUNCTION__,
           $params,
-          print_r($result, true),
+          print_r($domainsUsage, true),
           null
       );
       
