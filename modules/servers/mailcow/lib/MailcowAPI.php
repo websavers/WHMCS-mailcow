@@ -330,14 +330,17 @@ class MailcowAPI{
     
     $domains_d = $this->_getDomains();
     $mailboxes_d = $this->_getMailboxes();
-    
+        
     $usagedata = array();
     
     foreach ($domains_d as $dominfo){
       //Init disk usage to 0 and set quota to actual value. 
-      $usagedata[$dominfo->domain_name] = array( 'disklimit' => ($dominfo->max_quota_for_domain)/(1024*1024), 'diskusage' => 0 );
+      $usagedata[$dominfo->domain_name] = array( 
+          'disklimit' => ($dominfo->max_quota_for_domain)/(1024*1024), 
+          'diskusage' => 0,
+      );
     }
-    
+
     foreach ($mailboxes_d as $mbinfo){
       //Increase disk usage for domain by this mailboxes' usage
       $usagedata[$mbinfo->domain]['diskusage'] += ($mbinfo->quota_used)/(1024*1024);
@@ -349,13 +352,13 @@ class MailcowAPI{
   
   private function _getDomains(){
     
-    return json_decode( $this->curl->get( $this->baseurl . '/api/v1/domain/all', array() ) );
+    return json_decode( $this->curl->get( $this->baseurl . '/api/v1/get/domain/all', array() ) );
     
   }
   
   private function _getMailboxes(){
     
-    return json_decode( $this->curl->get( $this->baseurl . '/api/v1/mailbox/all', array() ) );
+    return json_decode( $this->curl->get( $this->baseurl . '/api/v1/get/mailbox/all', array() ) );
     
   }
   
