@@ -275,7 +275,7 @@ class MailcowAPI{
         }
       }
       
-      $this->_removeMailboxes($mbaddrs);
+      if (!empty($mbaddrs)) $this->_removeMailboxes($mbaddrs);
       
     }
     else{
@@ -297,7 +297,7 @@ class MailcowAPI{
         }
       }
       
-      $this->_removeResources($resources);
+      if (!empty($resources)) $this->_removeResources($resources);
       
     }
     else{
