@@ -288,13 +288,16 @@ class MailcowAPI{
     
     if ( isset($domain) && !empty($domain) ){
       
-      $resources = $this->_getResources();
+      $resources_json = $this->_getResources();
       
-      foreach ($resources as $rinfo){
+      $resources = array();
+      foreach ($resources_json as $rinfo){
         if ( $rinfo->domain === $domain ){
-            $this->_removeResource($rinfo->name);
+            array_push($resources, $rinfo->name);
         }
       }
+      
+      $this->_removeResources($resources);
       
     }
     else{
@@ -306,7 +309,10 @@ class MailcowAPI{
   // Expects array of $mailboxes
   private function _removeMailboxes($mailboxes){
     
-    $data = array('items' => json_encode($mailboxes));
+    $data = array(
+      'items' => json_encode($mailboxes), 
+      'csrf_token' => $this->csrf_token,
+    );
     
     $uri = '/api/v1/delete/mailbox';
     
@@ -321,16 +327,23 @@ class MailcowAPI{
     
   }
   
-  private function _removeResource($name){
+  private function _removeResources($resources){
     
     $data = array(
-      'name' => $name,
-      'mailbox_delete_resource' => '',
+      'items' => json_encode($resources), 
+      'csrf_token' => $this->csrf_token,
     );
     
-    $this->curl->post($this->baseurl . '/mailbox.php', $data);
+    $uri = '/api/v1/delete/resource';
     
-    return $this->error_checking();
+    $this->curl->post($this->baseurl . $uri, $data);
+    
+    try{
+      $result = $this->error_checking($uri, $data); 
+    }
+    catch (Exception $e) {
+      return $e->getMessage();
+    }
     
   }
   
