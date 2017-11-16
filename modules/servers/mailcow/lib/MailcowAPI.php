@@ -454,13 +454,15 @@ class MailcowAPI{
     else {
       $json = $this->curl->response;
       
-      logModuleCall(
-          'mailcow',
-          $action,
-          print_r($data_sent, true),
-          print_r($json, true),
-          null
-      );
+      if ($action !== 'init'){ //silence initial connection logging
+        logModuleCall(
+            'mailcow',
+            $action,
+            print_r($data_sent, true),
+            print_r($json, true),
+            null
+        );
+      }
 
       if ($json->type == "error" || $json->type == "danger"){
         throw new \Exception($json->msg);
