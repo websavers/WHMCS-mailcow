@@ -268,11 +268,14 @@ class MailcowAPI{
       
       $mailboxes = $this->_getMailboxes();
       
+      $mbaddrs = array();
       foreach ($mailboxes as $mbinfo){
         if ( $mbinfo->domain === $domain ){
-            $this->_removeMailbox($mbinfo->username);
+            array_push($mbaddrs, $mbinfo->username);
         }
       }
+      
+      $this->_removeMailboxes($mbaddrs);
       
     }
     else{
@@ -300,16 +303,21 @@ class MailcowAPI{
     
   }
   
-  private function _removeMailbox($mailbox){
+  // Expects array of $mailboxes
+  private function _removeMailboxes($mailboxes){
     
-    $data = array(
-      'username' => $mailbox,
-      'mailbox_delete_mailbox' => '',
-    );
+    $data = array('items' => json_encode($mailboxes));
     
-    $this->curl->post($this->baseurl . '/mailbox.php', $data);
+    $uri = '/api/v1/delete/mailbox';
     
-    return $this->error_checking();
+    $this->curl->post($this->baseurl . $uri, $data);
+    
+    try{
+      $result = $this->error_checking($uri, $data); 
+    }
+    catch (Exception $e) {
+      return $e->getMessage();
+    }
     
   }
   
